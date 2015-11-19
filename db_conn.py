@@ -95,6 +95,11 @@ class db_api(object):
                         x_pos, y_pos, op_codes+0 from device \
                         where id={}".format(dev_id))
             res = cur.fetchone()
+	    # TODO: update heart beat timestamp
+	    cur.execute("update device \
+			set last_seen=now() \
+			where id={}".format(dev_id))
+            conn.commit()
             cur.close()
             return res
         except Exception, e:
