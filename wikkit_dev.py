@@ -42,7 +42,7 @@ def dev_check_status(devId):
     last_updated = record[1]
     manage_flags = int(record[2])
 
-    if (manage_flags % 2 != 0):  # operation mode
+    if (manage_flags % 2 == 0):  # operation mode
         db_api.device_reset_op(devId)
         return jsonify({"manage": False})
 
@@ -57,6 +57,7 @@ def dev_check_status(devId):
         return jsonify({"manage": True})  # do nothing , keep managing
 
     op_codes = record[5]
+
     # exam servo turning
     servo_active = bool(op_codes % 2)
     servo_turn_mode = bool((op_codes >> 1) % 2)
@@ -73,8 +74,9 @@ def dev_check_status(devId):
     commit = False
     if (not update):  # update and commit cannot happen together
         commit = bool((op_codes >> 7) % 2)
-
-    return jsonify({"servo_active": servo_active,
+    
+    return jsonify({"manage": True,
+		    "servo_active": servo_active,
                     "servo_turn_mode": servo_turn_mode,
                     "servo_inc_xy": servo_inc_xy,
                     "pos_x": pos_x,
@@ -95,25 +97,37 @@ def dev_report_done(devId):
     """
 
     content = request.json
+    print content
     if not content:
         abort(400)
+
+    to_fetch = False
+    to_flop = False
 
     if "servo_turned" in content:
         pos_x = int(content['pos_x'])
         pos_y = int(content['pos_y'])
 
         if bool(content["servo_turned"]):
-            db_api.device_flop_mgmt(devId, False)
+            print "flopped"
             db_api.device_update_pos(devId, pos_x, pos_y)
+	    to_flop = True
 
     if "picture_taken" in content and bool(content["picture_taken"]):
-        db_api.device_flop_mgmt(devId, True)
+	to_flop = True
+	to_fetch = True
 
-    if "update_complete" in content and content["update_complete"]:
-        db_api.device_flop_mgmt(devId, False)
+    if "video_taken" in content and bool(content["video_taken"]):
+	to_flop = True
+    
+    if "update_complete" in content and bool(content["update_complete"]):
+	to_flop = True
 
-    if "commit_complete" in content and content["commit_complete"]:
-        db_api.device_flop_mgmt(devId, False)
+    if "commit_complete" in content and bool(content["commit_complete"]):
+	to_flop = True
+
+    if to_flop:
+    	db_api.device_flop_mgmt(devId, to_fetch)
 
     return jsonify({"success": True})
 

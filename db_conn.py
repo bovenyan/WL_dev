@@ -117,7 +117,7 @@ class db_api(object):
             return False
 
     def device_update_pos(self, dev_id, pos_x, pos_y):
-        if (pos_x > 100 or pos_x < 0 or pos_y > 100, pos_y < 0):
+        if (pos_x > 90 or pos_x < -90 or pos_y > 90, pos_y < -90):
             return False
         try:
             conn = self.conn()
@@ -138,7 +138,7 @@ class db_api(object):
             conn = self.conn()
             cur = conn.cursor()
             cur.execute("update device \
-                        set manage_flags=manage_flags & 4 \
+                        set manage_flags=manage_flags & 11 \
                         where id={}".format(dev_id))
             if tofetch != 0:
                 cur.execute("update device \
