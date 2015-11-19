@@ -1,1 +1,0 @@
-# Wikkit Development Platform
