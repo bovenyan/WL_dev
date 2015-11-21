@@ -1,8 +1,9 @@
-from flask import Flask, request, jsonify, abort
+from flask import Flask, request, jsonify, abort, send_from_directory
 from datetime import datetime, timedelta
 import db_conn as db
 import ConfigParser
 import os
+from time import sleep
 
 """
 Code by bovenyan
@@ -74,9 +75,9 @@ def dev_check_status(devId):
     commit = False
     if (not update):  # update and commit cannot happen together
         commit = bool((op_codes >> 7) % 2)
-    
+
     return jsonify({"manage": True,
-		    "servo_active": servo_active,
+                    "servo_active": servo_active,
                     "servo_turn_mode": servo_turn_mode,
                     "servo_inc_xy": servo_inc_xy,
                     "pos_x": pos_x,
@@ -109,25 +110,24 @@ def dev_report_done(devId):
         pos_y = int(content['pos_y'])
 
         if bool(content["servo_turned"]):
-            print "flopped"
             db_api.device_update_pos(devId, pos_x, pos_y)
-	    to_flop = True
+            to_flop = True
 
     if "picture_taken" in content and bool(content["picture_taken"]):
-	to_flop = True
-	to_fetch = True
+        to_flop = True
+        to_fetch = True
 
     if "video_taken" in content and bool(content["video_taken"]):
-	to_flop = True
-    
+        to_flop = True
+
     if "update_complete" in content and bool(content["update_complete"]):
-	to_flop = True
+        to_flop = True
 
     if "commit_complete" in content and bool(content["commit_complete"]):
-	to_flop = True
+        to_flop = True
 
     if to_flop:
-    	db_api.device_flop_mgmt(devId, to_fetch)
+        db_api.device_flop_mgmt(devId, to_fetch)
 
     return jsonify({"success": True})
 
@@ -140,12 +140,38 @@ def allowed_file(filename):
 @app.route("/dev/<int:devId>/picture", methods=['POST'])
 def dev_post_picture(devId):
     if 'file' not in request.files:
-	abort(400)
+        abort(400)
     file = request.files['file']
     if file and allowed_file(file.filename):
         file.save(os.path.join(file_dir, 'dev_'+str(devId)+'_test.jpg'))
 
     return jsonify({"success": True})
+
+
+@app.route("/usr/servo/<int devId>", methods=['POST'])
+def usr_move_servo(devId):
+    content = request.json
+
+    if ('inc_dec' in content and 'xy' in content):
+        db_api.user_servo_inc(devId,
+                              content['inc_dec'],
+                              content['xy'])
+        return jsonify({"success": True})
+
+    if ('pos_x' in content and 'pos_y' in content):
+        db_api.user_servo_pos(devId,
+                              content['pos_x'],
+                              content['pos_y'])
+
+    return jsonify({"success": False})
+
+
+@app.route("/usr/picture/<int:devId>", methods=['GET'])
+def usr_take_picture(devId):
+    db_api.user_take_pic(devId)
+    sleep(2)
+    return send_from_directory(file_dir, "dev_"+str(devId)+'_test.jpg')
+
 
 if __name__ == '__main__':
     """ Main

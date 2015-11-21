@@ -95,10 +95,11 @@ class db_api(object):
                         x_pos, y_pos, op_codes+0 from device \
                         where id={}".format(dev_id))
             res = cur.fetchone()
-	    # TODO: update heart beat timestamp
-	    cur.execute("update device \
-			set last_seen=now() \
-			where id={}".format(dev_id))
+
+            #  TODO: update heart beat timestamp
+            cur.execute("update device \
+                     set last_seen=now() \
+                     where id={}".format(dev_id))
             conn.commit()
             cur.close()
             return res
@@ -165,12 +166,100 @@ class db_api(object):
                         set manage_flags=1, \
                         op_codes=0 \
                         where id={}".format(dev_id))
-            conn.commti()
+            conn.commit()
             cur.close()
             return True
         except Exception, e:
             print str(e)
             return False
+
+    def user_close_mgmt(self, dev_id):
+        return self.device_reset_op(dev_id)
+
+    def user_check_dev_avail(self, dev_id):
+        try:
+            conn = self.conn()
+            cur = conn.cursor()
+            cur.execute("select manage_flags+0 from device \
+                        where id={}".format(dev_id))
+            manage_f = int(cur.fetchone())
+            if (not (manage_f & 4) and not (manage_f & 8)):
+                return True
+            return False
+        except Exception, e:
+            print str(e)
+            return False
+
+    def user_servo_inc(self, dev_id, inc_dec, xy):
+        try:
+            conn = self.conn()
+            cur = conn.cursor()
+
+            op_codes = 1
+
+            if (not xy):  # horizontal
+                op_codes = op_codes + inc_dec * 4
+            else:
+                op_codes = op_codes + inc_dec * 8
+
+            cur.execute("update device \
+                        set manage_flags=5, \
+                        op_codes={} \
+                        where id={}".format(op_codes, dev_id))
+
+            conn.commit()
+            cur.close()
+            return True
+        except Exception, e:
+            print str(e)
+            return False
+
+    def user_servo_pos(self, dev_id, pos_x, pos_y):
+        try:
+            conn = self.conn()
+            cur = conn.cursor()
+            cur.execute("update device \
+                        set manage_flags=5, \
+                        opcodes=3, \
+                        pos_x={}, pos_y={} \
+                        where id ={}".format(pos_x, pos_y, dev_id))
+            conn.commit()
+            cur.close()
+            return True
+        except Exception, e:
+            print str(e)
+            return False
+
+    def user_take_pic(self, dev_id):
+        try:
+            conn = self.conn()
+            cur = conn.cursor()
+            cur.execute("update device \
+                        set manage_flags=5, \
+                        opcodes=16 \
+                        where id ={}".format(dev_id))
+            conn.commit()
+            cur.close()
+            return True
+        except Exception, e:
+            print str(e)
+            return False
+
+    def user_fetch_avail(self, dev_id):
+        try:
+            conn = self.conn()
+            cur = conn.cursor()
+            cur.execute("select manage_flags+0 from device \
+                        where id={}".format(dev_id))
+            manage_f = int(cur.fetchone())
+
+            if (manage_f & 8):
+                return True
+            return False
+        except Exception, e:
+            print str(e)
+            return False
+
 
 if __name__ == "__main__":
     cc = db_api('./config.ini')
