@@ -32,8 +32,8 @@ def index():
 def dev_check_status(devId):
     """ Device Interface
         HowTo use:
-            ?? curl -i -H "Content-Type: application/json" \
-               -X GET http://localhost:5000/dev/<devId>
+             curl -i -H "Content-Type: application/json" \
+             -X GET http://localhost:5000/dev/1
     """
     record = db_api.device_get_rec(devId)
 
@@ -44,13 +44,13 @@ def dev_check_status(devId):
     manage_flags = int(record[2])
 
     if (manage_flags % 2 == 0):  # operation mode
-        db_api.device_reset_op(devId)
+        db_api.device_reset(devId)
         return jsonify({"manage": False})
 
     # verify the keep alive for management
     if (datetime.now() - last_updated > timedelta(0, manage_keepalive,
                                                   0)):
-        db_api.device_reset_op(devId)
+        db_api.device_reset(devId)
         return jsonify({"manage": False})
 
     # no apply or result not fetched
@@ -92,9 +92,9 @@ def dev_check_status(devId):
 def dev_report_done(devId):
     """ Device Interface
         HowTo use:
-            ?? curl -i -H "Content-Type: application/json" \
-               -X POST -d {""} \
-                http://localhost:5000/dev/<devId>
+            curl -i -H "Content-Type: application/json" \
+            -X POST -d {""} \
+            http://localhost:5000/dev/1
     """
 
     content = request.json
@@ -128,6 +128,7 @@ def dev_report_done(devId):
 
     if to_flop:
         db_api.device_flop_mgmt(devId, to_fetch)
+        db_api.device_reset_op(devId)
 
     return jsonify({"success": True})
 
@@ -148,7 +149,7 @@ def dev_post_picture(devId):
     return jsonify({"success": True})
 
 
-@app.route("/usr/servo/<int devId>", methods=['POST'])
+@app.route("/usr/servo/<int:devId>", methods=['POST'])
 def usr_move_servo(devId):
     content = request.json
 

@@ -107,13 +107,29 @@ class db_api(object):
             print str(e)
             return None
 
+    def device_reset(self, dev_id):
+	return self.device_reset_mgmt(dev_id) & self.device_reset_op(dev_id)
+	
+    def device_reset_mgmt(self, dev_id):
+        try:
+            conn = self.conn()
+            cur = conn.cursor()
+            cur.execute("update device \
+                        set manage_flags=0 \
+                        where id={}".format(dev_id))
+            conn.commit()
+            cur.close()
+            return True
+        except Exception, e:
+            print str(e)
+            return False
+	
     def device_reset_op(self, dev_id):
         try:
             conn = self.conn()
             cur = conn.cursor()
             cur.execute("update device \
-                        set manage_flags=0, \
-                        op_codes=0 \
+                        set op_codes=0 \
                         where id={}".format(dev_id))
             conn.commit()
             cur.close()
@@ -129,8 +145,8 @@ class db_api(object):
             conn = self.conn()
             cur = conn.cursor()
             cur.execute("update device \
-                        set pos_x={}, \
-                        pos_y={} \
+                        set x_pos={}, \
+                        y_pos={} \
                         where id={}".format(pos_x, pos_y, dev_id))
             conn.commit()
             cur.close()
@@ -220,8 +236,8 @@ class db_api(object):
             cur = conn.cursor()
             cur.execute("update device \
                         set manage_flags=5, \
-                        opcodes=3, \
-                        pos_x={}, pos_y={} \
+                        op_codes=3, \
+                        x_pos={}, y_pos={} \
                         where id ={}".format(pos_x, pos_y, dev_id))
             conn.commit()
             cur.close()
@@ -236,7 +252,7 @@ class db_api(object):
             cur = conn.cursor()
             cur.execute("update device \
                         set manage_flags=5, \
-                        opcodes=16 \
+                        op_codes=16 \
                         where id ={}".format(dev_id))
             conn.commit()
             cur.close()
