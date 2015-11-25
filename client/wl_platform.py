@@ -18,7 +18,15 @@ while(True):
 
     if (element[0] == "exit"):
 	print "Exiting... Bye"
-	break;
+	break
+
+    if (element[0] == "help"):
+	print ("Shake head:  e.g.  cam-1 servo position 20 50")
+	print ("	You can shake from -90 to 90")
+	print ("Take picture:  e.g.  cam-1 shot")
+	print ("	Please allow 2sec to respond")
+	print ("Exit:  e.g. exit")
+	continue
 
     if (element[0].startswith("cam-")):   # control a cam
         try:
