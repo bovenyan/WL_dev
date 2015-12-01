@@ -4,6 +4,7 @@ import ConfigParser
 import copy
 import requests
 import json
+import os
 
 class servo_sig(object):
 	def __init__(self, conf_path):
@@ -59,8 +60,6 @@ class servo_sig(object):
 						self.des_queue_x.put(ans['pos_x'])
 						self.des_queue_y.put(ans['pos_y'])
 
-					# sleep(2) # wait for turn servo
-
 					sleep(1)
 					if (not self.cur_queue_x.empty()):
 						servo_positions[0] = self.cur_queue_x.get()
@@ -77,7 +76,8 @@ class servo_sig(object):
 					response["pos_y"] = servo_positions[1]
 
 				if ('picture' in ans and ans['picture']):  # take picture
-					filename = dev + str(self.dev_id) + ".jpg"
+					filename = "dev" + str(self.dev_id) + ".jpg"
+					os.popen("rm "+ filename)
 					os.popen("raspistill -t 10 -o " + filename + " &") 
 					sleep(1)
 					try:
@@ -88,9 +88,9 @@ class servo_sig(object):
 					else:
 						# TODO check conn 
 						resp = requests.post(dev_url + "/picture", 
-								     files = {filename: open(filename, 'rb')})
+								     files = {"file": open(filename, 'rb')})
 						
-						if (resp['success']):
+						if (resp.status_code == 200):
 							response["picture_taken"] = True
 						else:
 							response["picture_taken"] = False

@@ -100,7 +100,7 @@ def dev_report_done(devId):
     content = request.json
     print content
     if not content:
-        abort(400)
+        return jsonify({})
 
     to_fetch = False
     to_flop = False
