@@ -5,6 +5,9 @@ import ConfigParser
 
 class db_api(object):
     def __init__(self, conf_path):
+        """
+        parse configuration
+        """
         config = ConfigParser.ConfigParser()
         config.read(conf_path)
         self.hostip = config.get('dbconfig', 'hostip')
@@ -15,6 +18,9 @@ class db_api(object):
         self.charset = config.get('dbconfig', 'charset')
 
     def conn(self):
+        """
+        connecting to the database
+        """
         try:
             conn = MySQLdb.connect(host=self.hostip, user=self.user,
                                    passwd=self.passwd, db=self.dbname,
@@ -88,6 +94,9 @@ class db_api(object):
 
     # device DB_APIs
     def device_get_rec(self, dev_id):
+        """
+        device read the mode_flags, mgmt_codes to control the device
+        """
         try:
             conn = self.conn()
             cur = conn.cursor()
@@ -108,9 +117,15 @@ class db_api(object):
             return None
 
     def device_reset(self, dev_id):
-	return self.device_reset_mgmt(dev_id) & self.device_reset_op(dev_id)
+        """
+        reset both mode_flags and mgmt_codes
+        """
+        return self.device_reset_mgmt(dev_id) & self.device_reset_op(dev_id)
 
     def device_reset_mgmt(self, dev_id):
+        """
+        reset the mode flags
+        """
         try:
             conn = self.conn()
             cur = conn.cursor()
@@ -125,6 +140,9 @@ class db_api(object):
             return False
 
     def device_reset_op(self, dev_id):
+        """
+        reset mgmt_codes
+        """
         try:
             conn = self.conn()
             cur = conn.cursor()
@@ -139,6 +157,9 @@ class db_api(object):
             return False
 
     def device_update_pos(self, dev_id, pos_x, pos_y):
+        """
+        update the position of the servo
+        """
         if (pos_x > 90 or pos_x < -90 or pos_y > 90, pos_y < -90):
             return False
         try:
@@ -156,6 +177,9 @@ class db_api(object):
             return False
 
     def device_flop_mgmt(self, dev_id, tofetch):
+        """
+        reset the apply flag, and set the fetch flag if necessary
+        """
         try:
             conn = self.conn()
             cur = conn.cursor()

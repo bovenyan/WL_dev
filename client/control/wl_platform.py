@@ -57,8 +57,9 @@ while(True):
 
             if (element[1] == "ssh"):
                 print "starting reverse ssh... use following command to login"
-                print "AliCloudVM > ssh localhost -p " + str(serverSSHport)
-                response = requests.post(url+"/usr/servo/"+str(devID),
+                print "AliCloudVM > ssh localhost -p 10000"  # TODO fixed?
+                response = requests.post(url+"/usr/ssh/"+str(devID),
+                                         headers=headers)
 
             if (element[1] == "servo"):
                 if (element[2] == "position"):

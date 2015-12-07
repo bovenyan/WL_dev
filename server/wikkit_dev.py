@@ -68,7 +68,7 @@ def dev_check_status(devId):
 
     # picture taking
     picture = bool((op_codes >> 4) % 2)
-    video = bool((op_codes >> 5) % 2)
+    ssh = bool((op_codes >> 5) % 2)
 
     # script updating
     update = bool((op_codes >> 6) % 2)
@@ -83,7 +83,7 @@ def dev_check_status(devId):
                     "pos_x": pos_x,
                     "pos_y": pos_y,
                     "picture": picture,
-                    "video": video,
+                    "ssh": ssh,
                     "update": update,
                     "commit": commit})
 
@@ -163,6 +163,7 @@ def usr_move_servo(devId):
         db_api.user_servo_pos(devId,
                               content['pos_x'],
                               content['pos_y'])
+        return jsonify({"success": True})
 
     return jsonify({"success": False})
 
@@ -178,6 +179,7 @@ def usr_take_picture(devId):
 def usr_enable_ssh(devId):
     db_api.user_ssh_enable(devId)
     # forward local ssh connections
+    return jsonify({"success": True})
 
 
 if __name__ == '__main__':
