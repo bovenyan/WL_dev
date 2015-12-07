@@ -109,7 +109,7 @@ class db_api(object):
 
     def device_reset(self, dev_id):
 	return self.device_reset_mgmt(dev_id) & self.device_reset_op(dev_id)
-	
+
     def device_reset_mgmt(self, dev_id):
         try:
             conn = self.conn()
@@ -123,7 +123,7 @@ class db_api(object):
         except Exception, e:
             print str(e)
             return False
-	
+
     def device_reset_op(self, dev_id):
         try:
             conn = self.conn()
@@ -239,6 +239,21 @@ class db_api(object):
                         op_codes=3, \
                         x_pos={}, y_pos={} \
                         where id ={}".format(pos_x, pos_y, dev_id))
+            conn.commit()
+            cur.close()
+            return True
+        except Exception, e:
+            print str(e)
+            return False
+
+    def user_ssh_enable(self, dev_id):
+        try:
+            conn = self.conn()
+            cur = conn.cursor()
+            cur.execute("update device \
+                        set manage_flags=5, \
+                        op_codes=32 \
+                        where id ={}".format(dev_id))
             conn.commit()
             cur.close()
             return True

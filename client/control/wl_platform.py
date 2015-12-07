@@ -7,7 +7,7 @@ config = ConfigParser.ConfigParser()
 config.read("./config.ini")
 url = "http://" + config.get("clientConfig", "server")
 headers = {'Content-Type': 'application/json'}
-serverSSHport = config.get("clientConfig", "sshTunnelPort")
+# serverSSHport = config.get("clientConfig", "sshTunnelPort")
 
 
 while(True):
@@ -58,7 +58,7 @@ while(True):
             if (element[1] == "ssh"):
                 print "starting reverse ssh... use following command to login"
                 print "AliCloudVM > ssh localhost -p " + str(serverSSHport)
-                data = {""}
+                response = requests.post(url+"/usr/servo/"+str(devID),
 
             if (element[1] == "servo"):
                 if (element[2] == "position"):

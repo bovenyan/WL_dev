@@ -174,6 +174,12 @@ def usr_take_picture(devId):
     return send_from_directory(file_dir, "dev_"+str(devId)+'_test.jpg')
 
 
+@app.route("/usr/ssh/<int:devId>", methods=['GET'])
+def usr_enable_ssh(devId):
+    db_api.user_ssh_enable(devId)
+    # forward local ssh connections
+
+
 if __name__ == '__main__':
     """ Main
     """
