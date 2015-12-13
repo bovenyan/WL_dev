@@ -14,7 +14,8 @@ db_api = db.db_api("./config.ini")
 
 config = ConfigParser.ConfigParser()
 config.read("./config.ini")
-manage_keepalive = int(config.get('opconfig', 'manageTO'))
+manage_timeout = int(config.get('opconfig', 'manageTO'))
+ssh_timeout = int(config.get('opconfig', 'sshTO'))
 file_dir = "./"
 
 
@@ -43,12 +44,22 @@ def dev_check_status(devId):
     last_updated = record[1]
     manage_flags = int(record[2])
 
+    # reset the device
+    if ((manage_flags >> 4) % 2 != 0):
+        db_api.device_reset(devId)
+        return jsonify({"reset": True})
+    if (datetime.now() - last_updated > timedelta(0, ssh_timeout,
+                                                  0)):
+        db_api.device_reset(devId)
+        return jsonify({"reset": True})
+
+
     if (manage_flags % 2 == 0):  # operation mode
         db_api.device_reset(devId)
         return jsonify({"manage": False})
 
     # verify the keep alive for management
-    if (datetime.now() - last_updated > timedelta(0, manage_keepalive,
+    if (datetime.now() - last_updated > timedelta(0, manage_timeout,
                                                   0)):
         db_api.device_reset(devId)
         return jsonify({"manage": False})
@@ -117,8 +128,9 @@ def dev_report_done(devId):
         to_flop = True
         to_fetch = True
 
-    if "video_taken" in content and bool(content["video_taken"]):
+    if "tunnel_opened" in content and bool(content["tunnel_opened"]):
         to_flop = True
+        to_fetch = True
 
     if "update_complete" in content and bool(content["update_complete"]):
         to_flop = True

@@ -30,8 +30,8 @@ class servo_sig(object):
                              self.des_queue_y, self.cur_queue_y)
 
         self.step = int(config.get("servoConfig", "step"))
-        self.server_ip = config.get("serverConfig", "serverIP")
-        self.server_port = config.get("serverConfig", "serverPort")
+        self.server_ip = config.get("servoConfig", "serverIP")
+        self.server_port = config.get("servoConfig", "serverPort")
         self.rest_addr = self.server_ip + ":" + self.server_port
 
         self.process = Process(target=self.signal_channel, args=())
@@ -48,6 +48,10 @@ class servo_sig(object):
             # TODO check conn
             ans = requests.get(dev_url)
             ans = ans.json()
+
+            if 'reset' in ans:
+                Popen(["pkill", "ssh"])
+                continue
 
             if ans['manage']:  # management mode
                 # TODO: Shutdown all the operational video
@@ -109,7 +113,7 @@ class servo_sig(object):
                                       "-o StrictHostKeyChecking=no"],
                                      stdout=PIPE,
                                      stderr=PIPE)
-                    pass
+                    response["tunnel_opened"] = True
 
                 # TODO update script
                 if ('update' in ans and ans['update']):
