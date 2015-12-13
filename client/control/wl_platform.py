@@ -44,6 +44,9 @@ while(True):
             if (element[1] == "operation"):
                 pass
 
+            if (element[1] == "reset"):
+                requests.post(url+"/usr/reset/"+str(devID), headers=headers)
+
             if (element[1] == "shot"):
                 with open('dev_'+str(devID)+".jpg", 'wb') as handle:
                     response = requests.get(url+"/usr/picture/"+str(devID))
@@ -56,8 +59,8 @@ while(True):
                         continue
 
             if (element[1] == "ssh"):
-                print "starting reverse ssh... use following command to login"
-                print "AliCloudVM > ssh localhost -p 10000"  # TODO fixed?
+                print "starting ssh tunnel, please logon AliCloudVM and: "
+                print "AliCloudVM > ssh pi@localhost -p 10000"  # TODO fixed?
                 response = requests.post(url+"/usr/ssh/"+str(devID),
                                          headers=headers)
 

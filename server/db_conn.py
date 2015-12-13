@@ -285,6 +285,20 @@ class db_api(object):
             print str(e)
             return False
 
+    def user_reset(self, dev_id):
+        try:
+            conn = self.conn()
+            cur = conn.cursor()
+            cur.execute("update device \
+                        set manage_flags=16, \
+                        where id ={}".format(dev_id))
+            conn.commit()
+            cur.close()
+            return True
+        except Exception, e:
+            print str(e)
+            return False
+
     def user_take_pic(self, dev_id):
         try:
             conn = self.conn()

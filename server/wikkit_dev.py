@@ -194,6 +194,12 @@ def usr_enable_ssh(devId):
     return jsonify({"success": True})
 
 
+@app.route("/usr/reset/<int:devId>", methods=['GET'])
+def usr_reset(devId):
+    db_api.user_reset(devId)
+    # forward local ssh connections
+    return jsonify({"success": True})
+
 if __name__ == '__main__':
     """ Main
     """
