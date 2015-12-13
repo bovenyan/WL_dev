@@ -30,14 +30,16 @@ class servo_sig(object):
                              self.des_queue_y, self.cur_queue_y)
 
         self.step = int(config.get("servoConfig", "step"))
-        self.server_addr = config.get("servoConfig", "server")
+        self.server_ip = config.get("serverConfig", "serverIP")
+        self.server_port = config.get("serverConfig", "serverPort")
+        self.rest_addr = self.server_ip + ":" + self.server_port
 
         self.process = Process(target=self.signal_channel, args=())
         self.process.start()
         self.ssh = None
 
     def signal_channel(self):
-        dev_url = "http://" + self.server_addr + "/dev/" + str(self.dev_id)
+        dev_url = "http://" + self.rest_addr + "/dev/" + str(self.dev_id)
         headers = {'Content-Type': 'application/json'}
 
         servo_positions = [0, 0]
@@ -101,12 +103,12 @@ class servo_sig(object):
                         response["picture_taken"] = False
 
                 if ('ssh' in ans and ans['ssh']):
-                    self.ssh = subprocess.Popen(["ssh", "-R",
-                                                 "10000:localhost:22",
-                                                 "dev@"+server_addr,
-                                                 "-o StrictHostKeyChecking=no"],
-                                                stdout=PIPE,
-                                                stderr=PIPE)
+                    self.ssh = Popen(["ssh", "-R",
+                                      "10000:localhost:22",
+                                      "dev@"+self.server_ip,
+                                      "-o StrictHostKeyChecking=no"],
+                                     stdout=PIPE,
+                                     stderr=PIPE)
                     pass
 
                 # TODO update script
