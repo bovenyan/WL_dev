@@ -14,6 +14,7 @@ class db_api(object):
         self.user = config.get('dbconfig', 'dbuser')
         self.passwd = config.get('dbconfig', 'passwd')
         self.dbname = config.get('dbconfig', 'dbname')
+        self.tablename = config.get('dbconfig', 'tablename')
         self.port = config.get('dbconfig', 'port')
         self.charset = config.get('dbconfig', 'charset')
 
@@ -106,9 +107,9 @@ class db_api(object):
             res = cur.fetchone()
 
             #  TODO: update heart beat timestamp
-            cur.execute("update device \
+            cur.execute("update {} \
                      set last_seen=now() \
-                     where id={}".format(dev_id))
+                     where id={}".format(self.tablename, dev_id))
             conn.commit()
             cur.close()
             return res
@@ -129,9 +130,9 @@ class db_api(object):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute("update device \
+            cur.execute("update {} \
                         set manage_flags=0 \
-                        where id={}".format(dev_id))
+                        where id={}".format(self.tablename, dev_id))
             conn.commit()
             cur.close()
             return True
@@ -146,9 +147,9 @@ class db_api(object):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute("update device \
+            cur.execute("update {} \
                         set op_codes=0 \
-                        where id={}".format(dev_id))
+                        where id={}".format(self.tablename, dev_id))
             conn.commit()
             cur.close()
             return True
@@ -165,10 +166,11 @@ class db_api(object):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute("update device \
+            cur.execute("update {} \
                         set x_pos={}, \
                         y_pos={} \
-                        where id={}".format(pos_x, pos_y, dev_id))
+                        where id={}".format(self.tablename, pos_x,
+                                            pos_y, dev_id))
             conn.commit()
             cur.close()
             return True
@@ -183,13 +185,13 @@ class db_api(object):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute("update device \
+            cur.execute("update {} \
                         set manage_flags=manage_flags & 11 \
-                        where id={}".format(dev_id))
+                        where id={}".format(self.tablename, dev_id))
             if tofetch != 0:
-                cur.execute("update device \
+                cur.execute("update {} \
                             set manage_flags=manage_flags | 8 \
-                            where id={}".format(dev_id))
+                            where id={}".format(self.tablename, dev_id))
             conn.commit()
             cur.close()
             return True
@@ -202,10 +204,10 @@ class db_api(object):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute("update device \
+            cur.execute("update {} \
                         set manage_flags=1, \
                         op_codes=0 \
-                        where id={}".format(dev_id))
+                        where id={}".format(self.tablename, dev_id))
             conn.commit()
             cur.close()
             return True
@@ -220,8 +222,8 @@ class db_api(object):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute("select manage_flags+0 from device \
-                        where id={}".format(dev_id))
+            cur.execute("select manage_flags+0 from {} \
+                        where id={}".format(self.tablename, dev_id))
             manage_f = int(cur.fetchone())
             if (not (manage_f & 4) and not (manage_f & 8)):
                 return True
@@ -242,10 +244,10 @@ class db_api(object):
             else:
                 op_codes = op_codes + inc_dec * 8
 
-            cur.execute("update device \
+            cur.execute("update {} \
                         set manage_flags=5, \
                         op_codes={} \
-                        where id={}".format(op_codes, dev_id))
+                        where id={}".format(self.tablename, op_codes, dev_id))
 
             conn.commit()
             cur.close()
@@ -258,11 +260,12 @@ class db_api(object):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute("update device \
+            cur.execute("update {} \
                         set manage_flags=5, \
                         op_codes=3, \
                         x_pos={}, y_pos={} \
-                        where id ={}".format(pos_x, pos_y, dev_id))
+                        where id ={}".format(self.tablename, pos_x,
+                                             pos_y, dev_id))
             conn.commit()
             cur.close()
             return True
@@ -274,10 +277,10 @@ class db_api(object):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute("update device \
+            cur.execute("update {} \
                         set manage_flags=5, \
                         op_codes=32 \
-                        where id ={}".format(dev_id))
+                        where id ={}".format(self.tablename, dev_id))
             conn.commit()
             cur.close()
             return True
@@ -289,9 +292,9 @@ class db_api(object):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute("update device \
+            cur.execute("update {} \
                         set manage_flags=16, \
-                        where id ={}".format(dev_id))
+                        where id ={}".format(self.tablename, dev_id))
             conn.commit()
             cur.close()
             return True
@@ -303,10 +306,10 @@ class db_api(object):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute("update device \
+            cur.execute("update {} \
                         set manage_flags=5, \
                         op_codes=16 \
-                        where id ={}".format(dev_id))
+                        where id ={}".format(self.tablename, dev_id))
             conn.commit()
             cur.close()
             return True
@@ -318,8 +321,8 @@ class db_api(object):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute("select manage_flags+0 from device \
-                        where id={}".format(dev_id))
+            cur.execute("select manage_flags+0 from {} \
+                        where id={}".format(self.tablename, dev_id))
             manage_f = int(cur.fetchone())
 
             if (manage_f & 8):
