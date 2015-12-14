@@ -102,8 +102,8 @@ class db_api(object):
             conn = self.conn()
             cur = conn.cursor()
             cur.execute("select id, last_operation, manage_flags+0, \
-                        x_pos, y_pos, op_codes+0 from device \
-                        where id={}".format(dev_id))
+                        x_pos, y_pos, op_codes+0 from {} \
+                        where id={}".format(self.tablename, dev_id))
             res = cur.fetchone()
 
             #  TODO: update heart beat timestamp
