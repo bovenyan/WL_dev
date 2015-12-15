@@ -7,10 +7,10 @@ Go to App Directory
 
 To start virtual environment for flask
 
-    source myprojectenv/bin/activate
+    source devEnv/bin/activate
 
 To start/stop service
 
-    sudo start flask_app
-    sudo stop flask_app
+    sudo start wikkit_dev
+    sudo stop wikkit_dev
 
