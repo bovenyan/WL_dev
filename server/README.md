@@ -14,3 +14,5 @@ To start/stop service
     sudo start wikkit_dev
     sudo stop wikkit_dev
 
+Check log 
+    sudo /var/log/uwsgi/wikkit_dev.log
