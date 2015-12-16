@@ -5,6 +5,7 @@ import ConfigParser
 import requests
 import json
 import os
+import signal
 
 
 class servo_sig(object):
@@ -197,6 +198,6 @@ class servo(object):
 
 
 if __name__ == "__main__":
-    ss = servo_sig("./config.ini")
-    raw_input("press enter to continue")
+    ss = servo_sig("/home/pi/wikkit/singal/config.ini")
+    signal.pause()
     ss.distroy_channel()
