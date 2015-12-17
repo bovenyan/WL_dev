@@ -27,7 +27,6 @@ def index():
     # return jsonify(msg="It's Working! Go ahead!")
     return "<h1 style='color:blue'>Wikkit dev platform working!</h1>"
 
-
 # DEVICE API
 @app.route("/dev/<int:devId>", methods=['GET'])
 def dev_check_status(devId):
@@ -161,6 +160,7 @@ def dev_post_picture(devId):
     return jsonify({"success": True})
 
 
+
 @app.route("/usr/servo/<int:devId>", methods=['POST'])
 def usr_move_servo(devId):
     content = request.json
@@ -194,11 +194,25 @@ def usr_enable_ssh(devId):
     return jsonify({"success": True})
 
 
+@app.route("/usr/mode/<int:devId", methods=['POST'])
+def usr_set_mode(devId):
+    content = request.json
+
+    if ('mgmt' in content):
+        db_api.user_enter_mgmt(devId)
+        return jsonify({"success": True})
+    if ('oper' in content):
+        db_api.user_close_mgmt(devId)
+        return jsonify({"success": True})
+    return jsonify({"success": False})
+
+
 @app.route("/usr/reset/<int:devId>", methods=['GET'])
 def usr_reset(devId):
     db_api.user_reset(devId)
     # forward local ssh connections
     return jsonify({"success": True})
+
 
 if __name__ == '__main__':
     """ Main

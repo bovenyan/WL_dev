@@ -8,10 +8,14 @@ config.read("./config.ini")
 url = "http://" + config.get("clientConfig", "server")
 headers = {'Content-Type': 'application/json'}
 # serverSSHport = config.get("clientConfig", "sshTunnelPort")
+manage_mode = False
 
 
 while(True):
-    in_put = raw_input('type help for help \n Wikkit Platform > ')
+    if (manage_mode):
+        in_put = raw_input('Wikkit Platform (operation) > ')
+    else:
+        in_put = raw_input('Wikkit Platform (manage) > ')
 
     element = in_put.split()
 

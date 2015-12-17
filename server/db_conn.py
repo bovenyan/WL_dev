@@ -52,44 +52,94 @@ class db_api(object):
         conn = self.conn()
         conn.close()
 
-    def insert_sql_cmd(self, sql_cmd):
+    # dev basic operation
+    def user_enter_mgmt(self, dev_id):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute(sql_cmd)
+            cur.execute("update {} \
+                        set manage_flags=1, \
+                        op_codes=0 \
+                        where id={}".format(self.tablename, dev_id))
             conn.commit()
             cur.close()
             return True
         except Exception, e:
-            print "[MYSQL ERROR] : {}".format(sql_cmd)
             print str(e)
-            cur.close()
             return False
 
-    def update_sql_cmd(self, sql_cmd):
+    def user_close_mgmt(self, dev_id):
+        return self.device_reset_op(dev_id)
+
+    def get_mgmt_flag(self, dev_id):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute(sql_cmd)
+            cur.execute("select manage_flags+0 from {} \
+                        where id={}".format(self.tablename, dev_id))
+            return int(cur.fetchone())
+        except Exception, e:
+            print str(e)
+            return -1
+
+    def set_mgmt_flag(self, dev_id, mgmt_flag):
+        try:
+            conn = self.conn()
+            cur = conn.cursor()
+            cur.execute("update {} \
+                        set manage_flags={}, \
+                        where id={}".format(self.tablename, mgmt_flag,
+                                            dev_id))
             conn.commit()
             cur.close()
             return True
         except Exception, e:
-            print "[MYSQL ERROR] : {}".format(sql_cmd)
             print str(e)
-            cur.close()
             return False
 
-    def query_sql_cmd(self, sql_cmd):
+    def get_op_codes(self, dev_id):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute(sql_cmd)
-            res = cur.fetchall()
-            cur.close()
-            return res
+            cur.execute("select op_codes+0 from {} \
+                        where id={}".format(self.tablename,
+                                            dev_id))
+            return int(cur.fetchone())
         except Exception, e:
-            print "[MYSQL ERROR] : {}".format(sql_cmd)
+            print str(e)
+            return -1
+
+    def set_op_codes(self, dev_id, op_codes):
+        try:
+            conn = self.conn()
+            cur = conn.cursor()
+            cur.execute("update {} \
+                        set op_codes={}, \
+                        where id={}".format(self.tablename,
+                                            op_codes,
+                                            dev_id))
+            conn.commit()
+            cur.close()
+            return True
+        except Exception, e:
+            print str(e)
+            return False
+
+    def set_device(self, dev_id, mgmt_flags, op_codes):
+        try:
+            conn = self.conn()
+            cur = conn.cursor()
+            cur.execute("update {} \
+                        set manage_flags={}, \
+                        op_codes={}, \
+                        where id={}".format(self.tablename,
+                                            mgmt_flags,
+                                            op_codes,
+                                            dev_id))
+            conn.commit()
+            cur.close()
+            return True
+        except Exception, e:
             print str(e)
             return False
 
@@ -117,45 +167,17 @@ class db_api(object):
             print str(e)
             return None
 
-    def device_reset(self, dev_id):
-        """
-        reset both mode_flags and mgmt_codes
-        """
-        return self.device_reset_mgmt(dev_id) & self.device_reset_op(dev_id)
-
     def device_reset_mgmt(self, dev_id):
         """
         reset the mode flags
         """
-        try:
-            conn = self.conn()
-            cur = conn.cursor()
-            cur.execute("update {} \
-                        set manage_flags=0 \
-                        where id={}".format(self.tablename, dev_id))
-            conn.commit()
-            cur.close()
-            return True
-        except Exception, e:
-            print str(e)
-            return False
+        return self.set_mgmt_flag(dev_id, 0)
 
     def device_reset_op(self, dev_id):
         """
         reset mgmt_codes
         """
-        try:
-            conn = self.conn()
-            cur = conn.cursor()
-            cur.execute("update {} \
-                        set op_codes=0 \
-                        where id={}".format(self.tablename, dev_id))
-            conn.commit()
-            cur.close()
-            return True
-        except Exception, e:
-            print str(e)
-            return False
+        return self.set_op_codes(dev_id, 0)
 
     def device_update_pos(self, dev_id, pos_x, pos_y):
         """
@@ -182,79 +204,34 @@ class db_api(object):
         """
         reset the apply flag, and set the fetch flag if necessary
         """
-        try:
-            conn = self.conn()
-            cur = conn.cursor()
-            cur.execute("update {} \
-                        set manage_flags=manage_flags & 11 \
-                        where id={}".format(self.tablename, dev_id))
-            if tofetch != 0:
-                cur.execute("update {} \
-                            set manage_flags=manage_flags | 8 \
-                            where id={}".format(self.tablename, dev_id))
-            conn.commit()
-            cur.close()
-            return True
-        except Exception, e:
-            print str(e)
-            return False
+        mgmt_flag = self.get_mgmt_flag & (~4)
+        if (tofetch):
+            mgmt_flag = mgmt_flag | 8
+
+        return self.set_mgmt_flag(devId, mgmt_flag)
 
     # API for ursers
-    def user_enter_mgmt(self, dev_id):
-        try:
-            conn = self.conn()
-            cur = conn.cursor()
-            cur.execute("update {} \
-                        set manage_flags=1, \
-                        op_codes=0 \
-                        where id={}".format(self.tablename, dev_id))
-            conn.commit()
-            cur.close()
-            return True
-        except Exception, e:
-            print str(e)
-            return False
 
-    def user_close_mgmt(self, dev_id):
-        return self.device_reset_op(dev_id)
+    def user_check_dev_mgmt(self, dev_id):
+        manage_f = get_mgmt_flag(dev_id)
+        return bool(manage_f & 1)
 
     def user_check_dev_avail(self, dev_id):
-        try:
-            conn = self.conn()
-            cur = conn.cursor()
-            cur.execute("select manage_flags+0 from {} \
-                        where id={}".format(self.tablename, dev_id))
-            manage_f = int(cur.fetchone())
-            if (not (manage_f & 4) and not (manage_f & 8)):
-                return True
-            return False
-        except Exception, e:
-            print str(e)
-            return False
+        manage_f = get_mgmt_flag(dev_id)
+        if (not (manage_f & 4) and not (manage_f & 8)):
+            return True
+        return False
 
     def user_servo_inc(self, dev_id, inc_dec, xy):
-        try:
-            conn = self.conn()
-            cur = conn.cursor()
+        self.set_mgmt_flag(dev_id, 5)
 
-            op_codes = 1
+        op_codes = 1
+        if (not xy):  # horizontal
+            op_codes = op_codes + inc_dec * 4
+        else:
+            op_codes = op_codes + inc_dec * 8
 
-            if (not xy):  # horizontal
-                op_codes = op_codes + inc_dec * 4
-            else:
-                op_codes = op_codes + inc_dec * 8
-
-            cur.execute("update {} \
-                        set manage_flags=5, \
-                        op_codes={} \
-                        where id={}".format(self.tablename, op_codes, dev_id))
-
-            conn.commit()
-            cur.close()
-            return True
-        except Exception, e:
-            print str(e)
-            return False
+        return self.set_op_codes(op_codes, dev_id)
 
     def user_servo_pos(self, dev_id, pos_x, pos_y):
         try:
@@ -274,63 +251,17 @@ class db_api(object):
             return False
 
     def user_ssh_enable(self, dev_id):
-        try:
-            conn = self.conn()
-            cur = conn.cursor()
-            cur.execute("update {} \
-                        set manage_flags=5, \
-                        op_codes=32 \
-                        where id ={}".format(self.tablename, dev_id))
-            conn.commit()
-            cur.close()
-            return True
-        except Exception, e:
-            print str(e)
-            return False
+        return set_device(dev_id, 5, 32)
 
     def user_reset(self, dev_id):
-        try:
-            conn = self.conn()
-            cur = conn.cursor()
-            cur.execute("update {} \
-                        set manage_flags=16, \
-                        where id ={}".format(self.tablename, dev_id))
-            conn.commit()
-            cur.close()
-            return True
-        except Exception, e:
-            print str(e)
-            return False
+        return self.set_mgmt_flag(dev_id, 16)
 
     def user_take_pic(self, dev_id):
-        try:
-            conn = self.conn()
-            cur = conn.cursor()
-            cur.execute("update {} \
-                        set manage_flags=5, \
-                        op_codes=16 \
-                        where id ={}".format(self.tablename, dev_id))
-            conn.commit()
-            cur.close()
-            return True
-        except Exception, e:
-            print str(e)
-            return False
+        return set_device(dev_id, 5, 16)
 
     def user_fetch_avail(self, dev_id):
-        try:
-            conn = self.conn()
-            cur = conn.cursor()
-            cur.execute("select manage_flags+0 from {} \
-                        where id={}".format(self.tablename, dev_id))
-            manage_f = int(cur.fetchone())
-
-            if (manage_f & 8):
-                return True
-            return False
-        except Exception, e:
-            print str(e)
-            return False
+        mgmt_flag = get_mgmt_flag(dev_id)
+        return (mgmt_flag & 8)
 
 
 if __name__ == "__main__":
