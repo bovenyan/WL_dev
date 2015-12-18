@@ -59,6 +59,11 @@ class db_api(object):
             conn = self.conn()
             cur = conn.cursor()
 
+            # fetch mgmt flags
+            cur.execute("select manage_flags+0 from {} \
+                        where id={}".format(self.tablename, dev_id))
+            res = int(cur.fetchone()[0])
+
             # update time stamp
             if (usr_dev):
                 cur.execute("update {} \
@@ -68,11 +73,9 @@ class db_api(object):
                 cur.execute("update {} \
                             set last_seen=now() \
                             where id={}".format(self.tablename, dev_id))
-
-            # fetch mgmt flags
-            cur.execute("select manage_flags+0 from {} \
-                        where id={}".format(self.tablename, dev_id))
-            return int(cur.fetchone()[0])
+            conn.commit()
+            conn.close()
+            return res
         except Exception, e:
             print str(e)
             return -1
@@ -105,6 +108,12 @@ class db_api(object):
         try:
             conn = self.conn()
             cur = conn.cursor()
+
+            cur.execute("select op_codes+0 from {} \
+                        where id={}".format(self.tablename,
+                                            dev_id))
+
+            res = int(cur.fetchone()[0])
             # update time stamp
             if (usr_dev):
                 cur.execute("update {} \
@@ -114,11 +123,9 @@ class db_api(object):
                 cur.execute("update {} \
                             set last_seen=now() \
                             where id={}".format(self.tablename, dev_id))
-
-            cur.execute("select op_codes+0 from {} \
-                        where id={}".format(self.tablename,
-                                            dev_id))
-            return int(cur.fetchone())
+            conn.commit()
+            cur.close()
+            return res
         except Exception, e:
             print str(e)
             return -1
@@ -192,12 +199,11 @@ class db_api(object):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute("select id, last_operation, manage_flags+0, \
+            cur.execute("select last_operation, manage_flags+0, \
                         x_pos, y_pos, op_codes+0 from {} \
                         where id={}".format(self.tablename, dev_id))
             res = cur.fetchone()
 
-            #  TODO: update heart beat timestamp
             cur.execute("update {} \
                      set last_seen=now() \
                      where id={}".format(self.tablename, dev_id))
@@ -212,13 +218,13 @@ class db_api(object):
         """
         reset the mode flags
         """
-        return self.set_mgmt_flag(dev_id, 0)
+        return self.set_mgmt_flag(dev_id, 0, False)
 
     def device_reset_op(self, dev_id):
         """
         reset mgmt_codes
         """
-        return self.set_op_codes(dev_id, 0)
+        return self.set_op_codes(dev_id, 0, False)
 
     def device_update_pos(self, dev_id, pos_x, pos_y):
         """
@@ -231,7 +237,8 @@ class db_api(object):
             cur = conn.cursor()
             cur.execute("update {} \
                         set x_pos={}, \
-                        y_pos={} \
+                        y_pos={}, \
+                        last_seen=now()\
                         where id={}".format(self.tablename, pos_x,
                                             pos_y, dev_id))
             conn.commit()
@@ -240,6 +247,16 @@ class db_api(object):
         except Exception, e:
             print str(e)
             return False
+
+    def device_set_busy(self, dev_id):
+        mgmt_flag = self.get_mgmt_flag(dev_id, False)
+        mgmt_flag = mgmt_flag | 8
+        return self.set_mgmt_flag(dev_id, mgmt_flag, False)
+
+    def device_reset_user(self, dev_id):
+        mgmt_flag = self.get_mgmt_flag(dev_id, False)
+        mgmt_flag = mgmt_flag & (~4)
+        return self.set_mgmt_flag(dev_id, mgmt_flag, False)
 
     def device_flop_mgmt(self, dev_id, tofetch):
         """
