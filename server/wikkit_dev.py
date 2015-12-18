@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 import db_conn as db
 import ConfigParser
 import os
-from time import sleep
 
 """
 Code by bovenyan
@@ -26,6 +25,7 @@ def index():
     """
     # return jsonify(msg="It's Working! Go ahead!")
     return "<h1 style='color:blue'>Wikkit dev platform working!</h1>"
+
 
 # DEVICE API
 @app.route("/dev/<int:devId>", methods=['GET'])
@@ -51,7 +51,6 @@ def dev_check_status(devId):
                                                   0)):
         db_api.device_reset(devId)
         return jsonify({"reset": True})
-
 
     if (manage_flags % 2 == 0):  # operation mode
         db_api.device_reset(devId)
@@ -160,57 +159,95 @@ def dev_post_picture(devId):
     return jsonify({"success": True})
 
 
+# User REST
 
-@app.route("/usr/servo/<int:devId>", methods=['POST'])
-def usr_move_servo(devId):
+@app.route("/usr/<int:devId>/mode", methods=['POST'])  # tested
+def usr_enable_mgmt(devId):
     content = request.json
-
-    if ('inc_dec' in content and 'xy' in content):
-        db_api.user_servo_inc(devId,
-                              content['inc_dec'],
-                              content['xy'])
-        return jsonify({"success": True})
-
-    if ('pos_x' in content and 'pos_y' in content):
-        db_api.user_servo_pos(devId,
-                              content['pos_x'],
-                              content['pos_y'])
-        return jsonify({"success": True})
+    if (isinstance(content, bool)):
+        if (bool(content)):
+            return jsonify({"success": db_api.enable_mgmt(devId)})
+        else:
+            return jsonify({"success": db_api.disable_mgmt(devId)})
 
     return jsonify({"success": False})
 
 
-@app.route("/usr/picture/<int:devId>", methods=['GET'])
-def usr_take_picture(devId):
-    db_api.user_take_pic(devId)
-    sleep(2)
-    return send_from_directory(file_dir, "dev_"+str(devId)+'_test.jpg')
+@app.route("/usr/<int:devId>/servo", methods=['POST'])
+def usr_move_servo(devId):
+    if (db_api.user_check_dev_mgmt(devId)):
+        content = request.json
+
+        if ('inc_dec' in content and 'xy' in content):
+            db_api.user_servo_inc(devId,
+                                  content['inc_dec'],
+                                  content['xy'])
+            return jsonify({"success": True})
+
+        if ('pos_x' in content and 'pos_y' in content):  # tested
+            db_api.user_servo_pos(devId,
+                                  content['pos_x'],
+                                  content['pos_y'])
+            return jsonify({"success": True})
+
+    return jsonify({"success": False})
+
+"""
+cam-1 shot -> cam-1 fetch code -> cam-1 fetch file
+"""
 
 
-@app.route("/usr/ssh/<int:devId>", methods=['GET'])
+@app.route("/usr/<int:devId>/picture/<op>", methods=['POST'])
+def usr_take_picture(devId, op):
+    if (db_api.user_check_dev_mgmt(devId)):
+        if (op == 'shot'):
+            return jsonify({"success":
+                            db_api.user_take_pic(devId)})
+
+        if (op == 'query'):
+            if (db_api.user_check_dev_fetch(devId)):
+                return jsonify({"success": True,
+                                "file": str(devId)})
+            return jsonify({"success": False})
+
+        if (op == 'get'):
+            content = request.json
+            if (isinstance(content, dict) and "file" in content):
+                print "I'm fucking sending@"
+                return send_from_directory(file_dir,
+                                           "dev_" + str(devId) + '.jpg')
+            return jsonify({"success": False})
+
+        if (op == 'fetched'):
+            db_api.enable_mgmt(devId)
+
+    return jsonify({"success": False})
+
+
+@app.route("/usr/<int:devId>/ssh", methods=['GET'])   # tested
 def usr_enable_ssh(devId):
-    db_api.user_ssh_enable(devId)
-    # forward local ssh connections
-    return jsonify({"success": True})
+    return jsonify({"success": db_api.user_ssh_enable(devId),
+                    "port": 10000+devId})
 
 
-@app.route("/usr/mode/<int:devId", methods=['POST'])
+@app.route("/usr/<int:devId>/mode", methods=['POST'])
 def usr_set_mode(devId):
     content = request.json
+    if (isinstance(content, list)):
+        if ('mgmt' in content):
+            db_api.user_enable_mgmt(devId)
+            return jsonify({"success": True})
+        if ('oper' in content):
+            db_api.user_disable_mgmt(devId)
+            return jsonify({"success": True})
 
-    if ('mgmt' in content):
-        db_api.user_enter_mgmt(devId)
-        return jsonify({"success": True})
-    if ('oper' in content):
-        db_api.user_close_mgmt(devId)
-        return jsonify({"success": True})
     return jsonify({"success": False})
 
 
-@app.route("/usr/reset/<int:devId>", methods=['GET'])
+@app.route("/usr/<int:devId>/reset", methods=['POST'])
 def usr_reset(devId):
     db_api.user_reset(devId)
-    # forward local ssh connections
+    # TODO close device ssh id
     return jsonify({"success": True})
 
 

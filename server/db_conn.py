@@ -53,43 +53,47 @@ class db_api(object):
         conn.close()
 
     # dev basic operation
-    def user_enter_mgmt(self, dev_id):
+
+    def get_mgmt_flag(self, dev_id, usr_dev=True):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute("update {} \
-                        set manage_flags=1, \
-                        op_codes=0 \
-                        where id={}".format(self.tablename, dev_id))
-            conn.commit()
-            cur.close()
-            return True
-        except Exception, e:
-            print str(e)
-            return False
 
-    def user_close_mgmt(self, dev_id):
-        return self.device_reset_op(dev_id)
+            # update time stamp
+            if (usr_dev):
+                cur.execute("update {} \
+                            set last_operation=now() \
+                            where id={}".format(self.tablename, dev_id))
+            else:
+                cur.execute("update {} \
+                            set last_seen=now() \
+                            where id={}".format(self.tablename, dev_id))
 
-    def get_mgmt_flag(self, dev_id):
-        try:
-            conn = self.conn()
-            cur = conn.cursor()
+            # fetch mgmt flags
             cur.execute("select manage_flags+0 from {} \
                         where id={}".format(self.tablename, dev_id))
-            return int(cur.fetchone())
+            return int(cur.fetchone()[0])
         except Exception, e:
             print str(e)
             return -1
 
-    def set_mgmt_flag(self, dev_id, mgmt_flag):
+    def set_mgmt_flag(self, dev_id, mgmt_flag, usr_dev=True):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute("update {} \
-                        set manage_flags={}, \
-                        where id={}".format(self.tablename, mgmt_flag,
-                                            dev_id))
+            if (usr_dev):
+                cur.execute("update {} \
+                            set manage_flags={}, \
+                            last_operation=now() \
+                            where id={}".format(self.tablename, mgmt_flag,
+                                                dev_id))
+            else:
+                cur.execute("update {} \
+                            set manage_flags={}, \
+                            last_seen=now() \
+                            where id={}".format(self.tablename, mgmt_flag,
+                                                dev_id))
+
             conn.commit()
             cur.close()
             return True
@@ -97,10 +101,20 @@ class db_api(object):
             print str(e)
             return False
 
-    def get_op_codes(self, dev_id):
+    def get_op_codes(self, dev_id, usr_dev=True):
         try:
             conn = self.conn()
             cur = conn.cursor()
+            # update time stamp
+            if (usr_dev):
+                cur.execute("update {} \
+                            set last_operation=now() \
+                            where id={}".format(self.tablename, dev_id))
+            else:
+                cur.execute("update {} \
+                            set last_seen=now() \
+                            where id={}".format(self.tablename, dev_id))
+
             cur.execute("select op_codes+0 from {} \
                         where id={}".format(self.tablename,
                                             dev_id))
@@ -109,15 +123,25 @@ class db_api(object):
             print str(e)
             return -1
 
-    def set_op_codes(self, dev_id, op_codes):
+    def set_op_codes(self, dev_id, op_codes, usr_dev=True):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute("update {} \
-                        set op_codes={}, \
-                        where id={}".format(self.tablename,
-                                            op_codes,
-                                            dev_id))
+            if (usr_dev):
+                cur.execute("update {} \
+                            set op_codes={}, \
+                            last_operation=now() \
+                            where id={}".format(self.tablename,
+                                                op_codes,
+                                                dev_id))
+            else:
+                cur.execute("update {} \
+                            set op_codes={}, \
+                            last_seen=now() \
+                            where id={}".format(self.tablename,
+                                                op_codes,
+                                                dev_id))
+
             conn.commit()
             cur.close()
             return True
@@ -125,23 +149,40 @@ class db_api(object):
             print str(e)
             return False
 
-    def set_device(self, dev_id, mgmt_flags, op_codes):
+    def set_device(self, dev_id, mgmt_flags, op_codes, usr_dev=True):
         try:
             conn = self.conn()
             cur = conn.cursor()
-            cur.execute("update {} \
-                        set manage_flags={}, \
-                        op_codes={}, \
-                        where id={}".format(self.tablename,
-                                            mgmt_flags,
-                                            op_codes,
-                                            dev_id))
+            if (usr_dev):
+                cur.execute("update {} \
+                            set manage_flags={}, \
+                            op_codes={}, \
+                            last_operation=now() \
+                            where id={}".format(self.tablename,
+                                                mgmt_flags,
+                                                op_codes,
+                                                dev_id))
+            else:
+                cur.execute("update {} \
+                            set manage_flags={}, \
+                            op_codes={}, \
+                            last_seen=now() \
+                            where id={}".format(self.tablename,
+                                                mgmt_flags,
+                                                op_codes,
+                                                dev_id))
             conn.commit()
             cur.close()
             return True
         except Exception, e:
             print str(e)
             return False
+
+    def enable_mgmt(self, dev_id, usr_dev=True):
+        return self.set_device(dev_id, 1, 0, usr_dev)
+
+    def disable_mgmt(self, dev_id, usr_dev=True):
+        return self.set_device(dev_id, 0, 0, usr_dev)
 
     # device DB_APIs
     def device_get_rec(self, dev_id):
@@ -208,17 +249,17 @@ class db_api(object):
         if (tofetch):
             mgmt_flag = mgmt_flag | 8
 
-        return self.set_mgmt_flag(devId, mgmt_flag)
+        return self.set_mgmt_flag(dev_id, mgmt_flag)
 
     # API for ursers
-
     def user_check_dev_mgmt(self, dev_id):
-        manage_f = get_mgmt_flag(dev_id)
+        manage_f = self.get_mgmt_flag(dev_id)
         return bool(manage_f & 1)
 
-    def user_check_dev_avail(self, dev_id):
-        manage_f = get_mgmt_flag(dev_id)
-        if (not (manage_f & 4) and not (manage_f & 8)):
+    def user_check_dev_fetch(self, dev_id):
+        manage_f = self.get_mgmt_flag(dev_id)
+        print manage_f
+        if (not (manage_f & 4) and (manage_f & 8)):
             return True
         return False
 
@@ -251,17 +292,17 @@ class db_api(object):
             return False
 
     def user_ssh_enable(self, dev_id):
-        return set_device(dev_id, 5, 32)
+        return self.set_device(dev_id, 5, 32)
 
     def user_reset(self, dev_id):
         return self.set_mgmt_flag(dev_id, 16)
 
     def user_take_pic(self, dev_id):
-        return set_device(dev_id, 5, 16)
+        return self.set_device(dev_id, 5, 16)
 
     def user_fetch_avail(self, dev_id):
-        mgmt_flag = get_mgmt_flag(dev_id)
-        return (mgmt_flag & 8)
+        mgmt_flag = self.get_mgmt_flag(dev_id)
+        return bool(mgmt_flag & 8)
 
 
 if __name__ == "__main__":
