@@ -7,7 +7,6 @@ def fetch_pids_of_port(ip, port):
     pids = []
 
     for conn in net_conn:
-        print conn
         if (ip in conn.raddr and port in conn.raddr):
             if (conn.pid is None):
                 print "error: no pid detected"
