@@ -56,7 +56,10 @@ class cam(object):
             return
 
         if (element[0] == "ssh"):   # tested
-            self._handle_ssh()
+            if (len(element) > 1):
+                self._handle_ssh(element[1:])
+            else:
+                self._print_help()
             return
 
         if (element[0] == "servo"):  # tested
@@ -93,7 +96,10 @@ class cam(object):
         print "         query the id of the newest picture: e.g. >camera query"
         print "         get the picture: e.g. >camera get <PICTURE ID>"
         print "         "
-        print "         start an ssh tunnel from cloud to the camera: e.g. >ssh"
+        print "         enable an ssh tunnel from cloud to the camera"
+        print "             start a tunnel e.g. >ssh start"
+        print "             stop a tunnel e.g. >ssh stop"
+        print "             restart a tunnel e.g. >ssh restart"
         print "         "
         print "         turn the servo: e.g. >servo posision 30 50"
         print "         "
@@ -141,15 +147,35 @@ class cam(object):
                                          file_name)
             requests.post(self.url+"/picture/fetched")
 
-    def _handle_ssh(self):  # tested
-        response = requests.get(self.url+"/ssh")
-        if (response.ok and "port" in response.json()):
-            print "ssh tunnel started, please:"
-            print "1. logon dev@cloud"
-            print "2. cloud> ssh pi@localhost -p " + \
-                str(response.json()["port"])
-        else:
-            print "failed..."
+    def _handle_ssh(self, element):  # tested
+        if (element[0] == "start"):
+            response = requests.post(self.url+"/ssh/start")
+            if (response.ok and "port" in response.json()):
+                print "ssh tunnel started, please:"
+                print "1. logon dev@cloud"
+                print "2. cloud> ssh pi@localhost -p " + \
+                    str(response.json()["port"])
+            else:
+                print "failed to start..."
+            return
+
+        if (element[0] == "stop"):
+            response = requests.post(self.url+"/ssh/start")
+            if (response.ok):
+                print "ssh stopped"
+            return
+
+        if (element[0] == "restart"):
+            response = requests.post(self.url+"/ssh/restart")
+            if (response.ok and "port" in response.json()):
+                print "ssh tunnel started, please:"
+                print "1. logon dev@cloud"
+                print "2. cloud> ssh pi@localhost -p " + \
+                    str(response.json()["port"])
+            else:
+                print "failed to start..."
+            return
+        self._print_help()
 
     def _handle_servo(self, element):  # tested
         try:

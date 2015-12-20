@@ -34,7 +34,8 @@ while(True):
                 device = cam(url, dev_id, fileAdapt)
             except Exception, e:
                 print str(e)
-                print "some help"
+                print "maybe connection is bad, retry..."
+                continue
 
     else:
         if (device.manage_mode):
@@ -43,8 +44,15 @@ while(True):
         else:
             query = raw_input("Wikkit Device " + str(device.dev_id) +
                               ": (operation) > ")
-        device.route_query(query)
+        try:
+            device.route_query(query)
 
-        if (not device.active):
-            del device
-            device = None
+            if (not device.active):
+                del device
+                device = None
+
+        except Exception, e:
+            print str(e)
+            print "maybe connection is bad, retry..."
+            continue
+
