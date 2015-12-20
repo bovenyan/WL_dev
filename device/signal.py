@@ -8,6 +8,10 @@ import os
 import signal
 from servo import servo
 
+import logging
+
+logging.basicConfig(filename='rasPi.log', level=logging.DEBUG)
+
 
 class signaling(object):
     def __init__(self, conf_path):
@@ -59,9 +63,10 @@ class signaling(object):
                 reply = requests.get(self.url + "/status", timeout=5)
                 reply = reply.json()
 
-                print reply
+                logging.debug(reply)
+
             except Exception, e:
-                print str(e)
+                logging.error(str(e))
                 continue
 
             if not isinstance(reply, dict) or len(reply) != 3:
@@ -118,8 +123,8 @@ class signaling(object):
                             response["servo"] = False
 
                     except Exception, e:
-                        print str(e)
-                        print "invalid servo input"
+                        logging.error(str(e))
+                        logging.warning("invalid servo input")
 
                 if ("type" in options and options["type"] == "picture"):
                     filename = "dev_" + str(self.dev_id) + ".jpg"
@@ -130,7 +135,7 @@ class signaling(object):
                     try:
                         open(filename)
                     except IOError:
-                        # print "cannot open"
+                        logging.error("cannot open")
                         response["picture"] = False
                     else:
                         # TODO check conn
@@ -140,14 +145,12 @@ class signaling(object):
                                                                      'rb')},
                                                  timeout=5)
 
+                            if (resp.ok):
+                                response["picture"] = True
+                            else:
+                                response["picture"] = False
                         except Exception, e:
-                            print str(e)
-                            continue
-
-                        if (resp.ok):
-                            response["picture"] = True
-                        else:
-                            response["picture"] = False
+                            logging.error(str(e))
 
                 if ("type" in options and options["type"] == "ssh"):
                     if (sshActive):
@@ -178,7 +181,7 @@ class signaling(object):
                                          headers=headers,
                                          timeout=5)
                 except Exception, e:
-                    print str(e)
+                    logging.error(str(e))
 
             if (reply["mode"] == "operation"):  # tested
                 sleep(self.op_sleep)
