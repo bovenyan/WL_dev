@@ -85,7 +85,23 @@ class cam(object):
             return
 
     def _print_help(self):
-        print "**** You are in cam mode ****"
+        print "**** You are in cam mode, you are controlling an RasPi ****"
+        print "Exit to normal mode:  e.g. >exit"
+        print "Enter Management mode: e.g. >management"
+        print "     In management mode, you can:"
+        print "         shot a picture: e.g. >camera shot"
+        print "         query the id of the newest picture: e.g. >camera query"
+        print "         get the picture: e.g. >camera get <PICTURE ID>"
+        print "         "
+        print "         start an ssh tunnel from cloud to the camera: e.g. >ssh"
+        print "         "
+        print "         turn the servo: e.g. >servo posision 30 50"
+        print "         "
+        print "         reset the device: e.g. >reset"
+        print "             Note: this will only reset ssh, not servo position"
+        print "Enter Operational mode: e.g. >operation"
+        print "     In operational mode: you can:"
+        print "         do nothing currently"
 
     def _handle_camera(self, element):
         if (element[0] == "shot"):
@@ -114,7 +130,7 @@ class cam(object):
                     print "Warning: impossible output, mind MIM attack"
 
             else:
-                print "device busy, try again or reset device"
+                print "device busy, try again later or reset device"
 
         if (element[0] == "get" and len(element) == 2):
             file_url = self.url + "/picture/get"
@@ -128,8 +144,9 @@ class cam(object):
     def _handle_ssh(self):  # tested
         response = requests.get(self.url+"/ssh")
         if (response.ok and "port" in response.json()):
-            print "ssh tunnel started, please logon AliCloudVM and: "
-            print "AliCloudVM > ssh pi@localhost -p " + \
+            print "ssh tunnel started, please:"
+            print "1. logon dev@cloud"
+            print "2. cloud> ssh pi@localhost -p " + \
                 str(response.json()["port"])
         else:
             print "failed..."

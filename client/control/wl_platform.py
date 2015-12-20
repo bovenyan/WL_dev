@@ -19,7 +19,9 @@ while(True):
         if (element is None or len(element) == 0):  # tested
             continue
         if (element[0] == "help"):  # tested
-            print "some help for main"
+            print "**** You are in normal mode****"
+            print "Type an device id to enter device mode: e.g. >cam-1"
+            print "Exit this platform: e.g. exit"
 
         if (element[0] == "exit"):  # tested
             print "Exiting... Bye"
