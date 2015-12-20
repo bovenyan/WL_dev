@@ -97,11 +97,26 @@ def dev_check_status(devId):
         return jsonify(reply)
 
     # ssh enable
-    ssh = bool((op_codes >> 5) % 2)   # tested
-    if (ssh):
+    ssh_enable = bool((op_codes >> 5) % 2)   # tested
+    ssh_disable = bool((op_codes >> 6) % 2)   # tested
+    if (ssh_enable and not ssh_disable):
         reply["options"]["type"] = "ssh"
+        reply["options"]["op"] = "start"
         db_api.device_reset_user(devId)  # reset for next immediately
         return jsonify(reply)
+    if (ssh_enable and ssh_disable):
+        kill_pids_of_port(10000+devId)
+        reply["options"]["type"] = "ssh"
+        db_api.device_reset_user(devId)  # reset for next immediately
+        reply["options"]["op"] = "restart"
+        return jsonify(reply)
+    if (ssh_disable and not ssh_enable):
+        kill_pids_of_port(10000+devId)
+        reply["options"]["type"] = "ssh"
+        db_api.device_reset_user(devId)  # reset for next immediately
+        reply["options"]["op"] = "stop"
+        return jsonify(reply)
+
 
     # TODO script updating
     # update = bool((op_codes >> 6) % 2)
@@ -223,10 +238,20 @@ def usr_take_picture(devId, op):
     return jsonify({"success": False})
 
 
-@app.route("/usr/<int:devId>/ssh", methods=['GET'])   # tested
-def usr_enable_ssh(devId):
-    return jsonify({"success": db_api.user_ssh_enable(devId),
-                    "port": 10000+devId})
+@app.route("/usr/<int:devId>/ssh/<op>", methods=['GET'])   # tested
+def usr_enable_ssh(devId, op):
+    if (db_api.user_check_dev_mgmt(devId)):
+        if (op == "start"):
+            return jsonify({"success": db_api.user_ssh_enable(devId),
+                            "port": 10000+devId})
+
+        if (op == "stop"):
+            return jsonify({"success": db_api.user_ssh_disable(devId)})
+
+        if (op == "restart"):
+            db_api.user_ssh_restart(devId)
+            return jsonify({"success": db_api.user_ssh_restart(devId),
+                            "port": 10000+devId})
 
 
 @app.route("/usr/<int:devId>/mode", methods=['POST'])

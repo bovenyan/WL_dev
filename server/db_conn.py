@@ -312,6 +312,12 @@ class db_api(object):
     def user_ssh_enable(self, dev_id):
         return self.set_device(dev_id, 5, 32)
 
+    def user_ssh_disable(self, dev_id):
+        return self.set_device(dev_id, 5, 64)
+
+    def user_ssh_restart(self, dev_id):
+        return self.set_device(dev_id, 5, 96)
+
     def user_reset(self, dev_id):
         return self.set_mgmt_flag(dev_id, 16)
 

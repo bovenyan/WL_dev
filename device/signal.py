@@ -154,18 +154,33 @@ class signaling(object):
                             logging.error(str(e))
 
                 if ("type" in options and options["type"] == "ssh"):
-                    if (sshActive):
+                    if ("op" in options and options["op"] == "start"):
+                        if (not sshActive):
+                            self.ssh = Popen(["ssh", "-R",
+                                              str(10000+self.dev_id) +
+                                              ":localhost:22",
+                                              "dev@"+self.server_ip,
+                                              "-o StrictHostKeyChecking=no"],
+                                             stdout=PIPE,
+                                             stderr=PIPE)
+                            sshActive = True
+                        response["tunnel_opened"] = True
+                    if ("op" in options and options["op"] == "stop"):
                         Popen(["pkill", "ssh"])  # kill ssh
-                        sleep(1)
+                        sshActive = False
+                        response["tunnel_opened"] = False
 
-                    self.ssh = Popen(["ssh", "-R",
-                                      str(10000+self.dev_id) + ":localhost:22",
-                                      "dev@"+self.server_ip,
-                                      "-o StrictHostKeyChecking=no"],
-                                     stdout=PIPE,
-                                     stderr=PIPE)
-                    sshActive = True
-                    response["tunnel_opened"] = True
+                    if ("op" in options and options["op"] == "restart"):
+                        Popen(["pkill", "ssh"])  # kill ssh
+                        self.ssh = Popen(["ssh", "-R",
+                                          str(10000+self.dev_id) +
+                                          ":localhost:22",
+                                          "dev@"+self.server_ip,
+                                          "-o StrictHostKeyChecking=no"],
+                                         stdout=PIPE,
+                                         stderr=PIPE)
+                        sshActive = True
+                        response["tunnel_opened"] = True
 
                 # TODO update script
                 # if ('update' in ans and ans['update']):
