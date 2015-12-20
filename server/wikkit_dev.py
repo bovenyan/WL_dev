@@ -210,7 +210,6 @@ def usr_take_picture(devId, op):
         if (op == 'get'):
             content = request.json
             if (isinstance(content, dict) and "file" in content):
-                print "I'm fucking sending@"
                 return send_from_directory(file_dir,
                                            "dev_" + str(devId) + '.jpg')
             return jsonify({"success": False})
