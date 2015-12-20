@@ -46,9 +46,9 @@ class signaling(object):
         self.process = Process(target=self.signal_channel, args=())
         self.process.start()
         self.ssh = None
-        self.sshActive = False
 
     def signal_channel(self):
+        sshActive = False
         headers = {'Content-Type': 'application/json'}
 
         servo_positions = [0, 0]
@@ -71,7 +71,7 @@ class signaling(object):
                 Popen(["pkill", "ssh"])  # kill ssh
                 self.des_queue_x.put(0)  # reset servo_x
                 self.des_queue_y.put(0)  # reset servo_y
-                self.sshActive = False
+                sshActive = False
 
             if 'management' == reply["mode"]:  # management mode
                 # TODO: Shutdown all the operational video
@@ -150,7 +150,7 @@ class signaling(object):
                             response["picture"] = False
 
                 if ("type" in options and options["type"] == "ssh"):
-                    if (self.sshActive):
+                    if (sshActive):
                         Popen(["pkill", "ssh"])  # kill ssh
                         sleep(1)
 
@@ -160,6 +160,7 @@ class signaling(object):
                                       "-o StrictHostKeyChecking=no"],
                                      stdout=PIPE,
                                      stderr=PIPE)
+                    sshActive = True
                     response["tunnel_opened"] = True
 
                 # TODO update script
