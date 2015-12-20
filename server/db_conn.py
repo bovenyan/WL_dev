@@ -209,6 +209,7 @@ class db_api(object):
                      where id={}".format(self.tablename, dev_id))
             conn.commit()
             cur.close()
+            print res
             return res
         except Exception, e:
             print str(e)
@@ -218,13 +219,13 @@ class db_api(object):
         """
         reset the mode flags
         """
-        return self.set_mgmt_flag(dev_id, 0, False)
+        return self.set_mgmt_flag(dev_id, 0, True)
 
     def device_reset_op(self, dev_id):
         """
         reset mgmt_codes
         """
-        return self.set_op_codes(dev_id, 0, False)
+        return self.set_op_codes(dev_id, 0, True)
 
     def device_update_pos(self, dev_id, pos_x, pos_y):
         """

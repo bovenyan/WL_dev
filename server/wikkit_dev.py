@@ -35,74 +35,80 @@ def dev_check_status(devId):
     if record is None:
         abort(400)
 
-    reply = ["operation", {}, None]  # [mode, options, reason]
+    reply = {"mode": "operation", "options": {}, "reason": None}
+    # [mode, options, reason]
 
     last_updated = record[0]
     manage_flags = int(record[1])
+    print manage_flags
 
-    if ((manage_flags >> 4) % 2 != 0):  # reset
+    if ((manage_flags >> 4) % 2 != 0):  #
         db_api.device_reset_mgmt(devId)
         db_api.device_reset_op(devId)
-        reply[0] = "reset"
+        reply["mode"] = "reset"
         return jsonify(reply)
 
-    if (manage_flags % 2 == 0):  # operational
-        reply[0] = "operation"
+    if (manage_flags % 2 == 0):  # tested
+        reply["mode"] = "operation"
         return jsonify(reply)
 
     # handle management timeout
-    reply[0] = "management"
-    if (datetime.now() - last_updated > timedelta(0, ssh_timeout,
+    reply["mode"] = "management"
+    if (datetime.now() - last_updated > timedelta(0, ssh_timeout,  # tested
                                                   0)):
         db_api.device_reset_mgmt(devId)
         db_api.device_reset_op(devId)
-        reply[0] = "reset"
+        reply["mode"] = "reset"
         return jsonify(reply)   # reset ssh
 
-    if (datetime.now() - last_updated > timedelta(0, manage_timeout,
+    if (datetime.now() - last_updated > timedelta(0, manage_timeout,  # tested
                                                   0)):
         db_api.device_reset_mgmt(devId)
         db_api.device_reset_op(devId)
-        reply[0] = "operation"
+        reply["mode"] = "operation"
         return jsonify(reply)   # flop to operation
 
     # no apply or result not ready
-    if ((manage_flags >> 2) % 2 == 0 or (manage_flags >> 3) % 2 != 0):
+    if ((manage_flags >> 2) % 2 == 0 or (manage_flags >> 3) % 2 != 0):  # tested
         return jsonify(reply)  # do nothing , keep managing
 
     # management options
-    op_codes = record[5]
+    op_codes = int(record[4])
 
     # exam servo turning
     servo_active = bool(op_codes % 2)
     if (servo_active):
-        reply[1]["type"] = "servo"
-        reply[1]["servo_turn_mode"] = bool((op_codes >> 1) % 2)
-        reply[1]["servo_inc_xy"] = int((op_codes >> 2) % 4)
-        reply[1]["pos_x"] = int(record[3])
-        reply[1]["pos_y"] = int(record[4])
+        reply["options"]["type"] = "servo"
+        reply["options"]["servo_turn_mode"] = bool((op_codes >> 1) % 2)
+        reply["options"]["servo_inc_xy"] = int((op_codes >> 2) % 4)
+        reply["options"]["pos_x"] = int(record[3])
+        reply["options"]["pos_y"] = int(record[4])
+        db_api.device_reset_user(devId)  # reset for next immediately
         return jsonify(reply)
 
     # picture taking
-    picture = bool((op_codes >> 4) % 2)
+    picture = bool((op_codes >> 4) % 2)   # tested
     if (picture):
-        reply[1]["type"] = "picture"
-        db_conn.device_set_busy(devId)
+        reply["options"]["type"] = "picture"
+        db_api.device_set_busy(devId)
         return jsonify(reply)
 
     # ssh enable
-    ssh = bool((op_codes >> 5) % 2)
+    ssh = bool((op_codes >> 5) % 2)   # tested
     if (ssh):
-        reply[1]["type"] = "ssh"
+        reply["options"]["type"] = "ssh"
+        db_api.device_reset_user(devId)  # reset for next immediately
         return jsonify(reply)
 
     # TODO script updating
-    update = bool((op_codes >> 6) % 2)
-    commit = False
-    if (not update):  # update and commit cannot happen together
-        commit = bool((op_codes >> 7) % 2)
-        pass
+    # update = bool((op_codes >> 6) % 2)
+    # commit = False
+    # if (not update):  # update and commit cannot happen together
+        # commit = bool((op_codes >> 7) % 2)
+    #    pass
 
+    # operation not recognized
+    db_api.device_reset_user(devId)
     return jsonify(reply)
 
 
@@ -111,9 +117,6 @@ def dev_report_done(devId):
     content = request.json
     if not content:
         return jsonify({})
-
-    to_fetch = False
-    to_flop = False
 
     if isinstance(content, dict):
         if ("servo" in content and content["servo"]):  # servo
@@ -125,16 +128,17 @@ def dev_report_done(devId):
         if ("picture" in content and content["picture"]):  # picture
             db_api.device_reset_user(devId)
 
-        if ("ssh" in content and content["ssh"]):  # ssh
+        if ("ssh" in content and content["ssh"]):  # ssh   # tested
             db_api.device_reset_user(devId)
 
-        if ("update" in content):
-            pass
+        # if ("update" in content):
+        #     pass
 
-        if ("commit" in content):
-            pass
+        # if ("commit" in content):
+        #     pass
 
     return jsonify({"success": True})
+
 
 def allowed_file(filename):
     return '.' in filename and \

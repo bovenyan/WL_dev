@@ -14,11 +14,11 @@ class signaling(object):
         config = ConfigParser.ConfigParser()
         config.read(conf_path)
 
-        self.dev_id = int(config.get("servoConfig", "devID"))
-
-        self.mgmt_sleep = int(config.get("servoConfig", "mgmtSleep"))
-        self.op_sleep = int(config.get("servoConfig", "opSleep"))
-        self.blaster = open('/dev/servoblaster', 'w')
+        self.dev_id = int(config.get("signalConfig", "devID"))
+        self.mgmt_sleep = int(config.get("signalConfig", "mgmtSleep"))
+        self.op_sleep = int(config.get("signalConfig", "opSleep"))
+        self.server_ip = config.get("signalConfig", "serverIP")
+        self.server_port = str(int(config.get("signalConfig", "serverPort")))
         self.rest_addr = self.server_ip + ":" + self.server_port
         self.url = "http://" + self.rest_addr + "/dev/" + str(self.dev_id)
 
@@ -27,6 +27,14 @@ class signaling(object):
         self.cur_queue_x = Queue()
         self.cur_queue_y = Queue()
 
+        self.blaster = open('/dev/servoblaster', 'w')
+
+        # debug **
+        self.debug_count = 10
+        self.debug_url = "http://"+"127.0.0.1:8000"+"/dev/"+str(self.dev_id)
+        self.debug_report_url = self.debug_url + "/report"
+        # debug **
+
         lock = Lock()
         self.servo_x = servo(config, 0, self.blaster, lock,
                              self.des_queue_x, self.cur_queue_x)
@@ -34,60 +42,91 @@ class signaling(object):
                              self.des_queue_y, self.cur_queue_y)
 
         self.step = int(config.get("servoConfig", "step"))
-        self.server_ip = config.get("servoConfig", "serverIP")
-        self.server_port = config.get("servoConfig", "serverPort")
 
         self.process = Process(target=self.signal_channel, args=())
         self.process.start()
         self.ssh = None
 
+
     def signal_channel(self):
         headers = {'Content-Type': 'application/json'}
 
         servo_positions = [0, 0]
+        report_url = self.url + "/report"
 
         while True:
-            # TODO check conn
-            ans = requests.get(self.url)
-            ans = ans.json()
+            #if (self.debug_count == 0):
+            #    self.url = self.debug_url
+            if (not self.debug_count):
+                self.debug_count = self.debug_count - 1
 
-            if 'reset' in ans:
-                Popen(["pkill", "ssh"])
+            try:
+                reply = requests.get(self.url + "/status", timeout=5)
+                reply = reply.json()
+
+                print reply
+            except Exception, e:
+                print str(e)
                 continue
 
-            if ans['manage']:  # management mode
+            if not isinstance(reply, dict) or len(reply) != 3:
+                continue
+
+            if 'reset' == reply["mode"]:
+                Popen(["pkill", "ssh"])  # kill ssh
+                self.des_queue_x.put(0)  # reset servo_x
+                self.des_queue_y.put(0)  # reset servo_y
+
+            if 'management' == reply["mode"]:  # management mode
                 # TODO: Shutdown all the operational video
                 sleep(self.mgmt_sleep)
+                options = reply["options"]
+                if (not isinstance(options, dict)):
+                    continue
 
                 response = {}
+                if ("type" in options and options["type"] == "servo"):
+                    servo_turn_mode = 0
+                    servo_inc_xy = 0
+                    pos_x = 0
+                    pos_y = 0
 
-                if ('servo_active' in ans and ans['servo_active']):  # servo
-                    if (not ans['servo_turn_mode']):  # inc
-                        if(not ans['servo_inc_xy']):  # x=0, y=1
-                            self.des_queue_x.put(servo_positions[0] + self.step)
+                    try:
+                        servo_turn_mode = int(options["servo_turn_mode"])
+                        servo_inc_xy = int(options["servo_inc_xy"])
+                        pos_x = int(options["pos_x"])
+                        pos_y = int(options["pos_y"])
+
+                        if (not servo_turn_mode):
+                            if (not servo_inc_xy):
+                                self.des_queue_x.put(servo_positions[0] +
+                                                     self.step)
+                            else:
+                                self.des_queue_x.put(servo_positions[1] +
+                                                     self.step)
                         else:
-                            self.des_queue_y.put(servo_positions[1] + self.step)
-                    else:  # pos
-                        self.des_queue_x.put(ans['pos_x'])
-                        self.des_queue_y.put(ans['pos_y'])
+                            self.des_queue_x.put(pos_x)
+                            self.des_queue_y.put(pos_y)
 
-                    sleep(1)  # wait for servo to react and get position
-                    if (not self.cur_queue_x.empty()):
-                        servo_positions[0] = self.cur_queue_x.get()
-                    if (not self.cur_queue_y.empty()):
-                        servo_positions[1] = self.cur_queue_y.get()
+                        if (not self.cur_queue_x.empty()):
+                            servo_positions[0] = self.cur_queue_x.get()
+                        if (not self.cur_queue_y.empty()):
+                            servo_positions[1] = self.cur_queue_y.get()
 
-                    if (servo_positions[0] == int(ans['pos_x']) and
-                       servo_positions[1] == int(ans['pos_y'])):
-                        response["servo_turned"] = True   # turned as expected
-                    else:
-                        response["servo_turned"] = False
+                        if (servo_positions[0] == pos_x and
+                           servo_positions[1] == pos_y):
+                            response["servo"] = True
+                            response["pos_x"] = servo_positions[0]
+                            response["pos_y"] = servo_positions[1]
+                        else:
+                            response["servo"] = False
 
-                    response["pos_x"] = servo_positions[0]
-                    response["pos_y"] = servo_positions[1]
+                    except Exception, e:
+                        print str(e)
+                        print "invalid servo input"
 
-                if ('picture' in ans and ans['picture']):  # take picture
-                    filename = "dev" + str(self.dev_id) + ".jpg"
+                if ("type" in options and options["type"] == "picture"):
+                    filename = "dev_" + str(self.dev_id) + ".jpg"
                     os.popen("rm " + filename)
                     os.popen("raspistill -t 10 -o " + filename + " &")
                     sleep(1)  # wait for picture to take
@@ -96,21 +135,27 @@ class signaling(object):
                         open(filename)
                     except IOError:
                         # print "cannot open"
-                        response["picture_taken"] = False
+                        response["picture"] = False
                     else:
                         # TODO check conn
-                        resp = requests.post(self.url + "/picture",
-                                             files={"file": open(filename,
-                                                                 'rb')})
+                        try:
+                            resp = requests.post(self.url + "/picture",
+                                                 files={"file": open(filename,
+                                                                     'rb')},
+                                                 timeout=5)
 
-                    if (resp.status_code == 200):
-                        response["picture_taken"] = True
-                    else:
-                        response["picture_taken"] = False
+                        except Exception, e:
+                            print str(e)
+                            continue
 
-                if ('ssh' in ans and ans['ssh']):
+                        if (resp.ok):
+                            response["picture"] = True
+                        else:
+                            response["picture"] = False
+
+                if ("type" in options and options["type"] == "ssh"):
                     self.ssh = Popen(["ssh", "-R",
-                                      "10000:localhost:22",
+                                      str(10000+self.dev_id) + ":localhost:22",
                                       "dev@"+self.server_ip,
                                       "-o StrictHostKeyChecking=no"],
                                      stdout=PIPE,
@@ -118,16 +163,24 @@ class signaling(object):
                     response["tunnel_opened"] = True
 
                 # TODO update script
-                if ('update' in ans and ans['update']):
-                    pass
-                elif ('commit' in ans and ans['commit']):
-                    pass
+                # if ('update' in ans and ans['update']):
+                #    pass
+                # elif ('commit' in ans and ans['commit']):
+                #    pass
 
                 # Response completion of jobs
                 # TODO check conn
-                resp = requests.post(self.url, data=json.dumps(response),
-                                     headers=headers)
-            else:
+
+                try:
+                    resp = requests.post(self.debug_report_url,
+                    # resp = requests.post(report_url,
+                                         data=json.dumps(response),
+                                         headers=headers,
+                                         timeout=5)
+                except Exception, e:
+                    print str(e)
+
+            if (reply["mode"] == "operation"):  # tested
                 sleep(self.op_sleep)
 
     def distroy_channel(self):
@@ -137,6 +190,6 @@ class signaling(object):
 
 
 if __name__ == "__main__":
-    ss = signaling("/home/pi/wikkit/singal/config.ini")
+    ss = signaling("/home/pi/wikkit/signal/config.ini")
     signal.pause()
     ss.distroy_channel()
