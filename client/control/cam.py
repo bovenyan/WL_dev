@@ -176,6 +176,17 @@ class cam(object):
             else:
                 print "failed to start..."
             return
+
+        if (element[0] == "zombie"):
+            res = raw_input("Are you sure the ssh tunnel turns zombie? (y/N)")
+            if (res == 'y' or res == 'Y'):
+                response = requests.post(self.url + "/ssh/zombie")
+                print "reset before making a new ssh tunnel. resetting..."
+                response = requests.post(self.url+"/ssh/restart")
+            else:
+                print "try again at cloud >ssh@localhost -p <designated port>"
+            return
+
         self._print_help()
 
     def _handle_servo(self, element):  # tested

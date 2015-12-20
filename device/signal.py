@@ -1,5 +1,5 @@
 from multiprocessing import Process, Lock, Queue
-from subprocess import Popen, PIPE
+from subprocess import Popen
 from time import sleep
 import ConfigParser
 import requests
@@ -78,6 +78,7 @@ class signaling(object):
                 self.des_queue_y.put(0)  # reset servo_y
                 kill_pids_of_port(self.server_ip, 22)
                 del ssh_pipe
+                ssh_pipe = None
 
             if 'management' == reply["mode"]:  # management mode
                 # TODO: Shutdown all the operational video
@@ -175,19 +176,17 @@ class signaling(object):
                         ssh_pipe = None
                         response["tunnel_opened"] = False
 
-                    """
                     if ("op" in options and options["op"] == "restart"):
                         kill_pids_of_port(self.server_ip, 22)
                         sleep(1)
-                        Popen(["ssh", "-R",
-                               str(10000+self.dev_id) +
-                               ":localhost:22",
-                               "dev@"+self.server_ip,
-                               "-o StrictHostKeyChecking=no", "&"],
-                              stdout=PIPE,
-                              stderr=PIPE)
+                        del ssh_pipe
+                        ssh_pipe = Popen(["ssh", "-R",
+                                          str(10000+self.dev_id) +
+                                          ":localhost:22",
+                                          "dev@"+self.server_ip,
+                                          "-o StrictHostKeyChecking=no",
+                                          "-N", "&"])
                         response["tunnel_opened"] = True
-                    """
                 # TODO update script
                 # if ('update' in ans and ans['update']):
                 #    pass

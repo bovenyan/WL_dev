@@ -6,7 +6,6 @@ def fetch_pids_of_port(port):
     net_conn = psutil.net_connections()
     pids = []
 
-    print net_conn
     for conn in net_conn:
         if ('127.0.0.1' in conn.laddr and port in conn.laddr):
             if (conn.pid is None):

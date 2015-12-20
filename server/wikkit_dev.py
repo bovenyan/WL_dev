@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import db_conn as db
 import ConfigParser
 import os
-# from process_mgmt import kill_pids_of_port
+from process_mgmt import kill_pids_of_port
 
 """
 Code by bovenyan
@@ -41,13 +41,12 @@ def dev_check_status(devId):
 
     last_updated = record[0]
     manage_flags = int(record[1])
-    print manage_flags
+
 
     if ((manage_flags >> 4) % 2 != 0):  # tested
         db_api.device_reset_mgmt(devId)
         db_api.device_reset_op(devId)
         reply["mode"] = "reset"
-        # kill_pids_of_port(10000+devId)
         return jsonify(reply)
 
     if (manage_flags % 2 == 0):  # tested
@@ -246,6 +245,10 @@ def usr_enable_ssh(devId, op):
 
         if (op == "stop"):
             return jsonify({"success": db_api.user_ssh_disable(devId)})
+
+        if (op == "zombie"):
+            kill_pids_of_port(10000+devId)
+            return jsonify({"success": True})
 
         if (op == "restart"):
             db_api.user_ssh_restart(devId)
