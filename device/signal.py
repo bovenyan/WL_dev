@@ -7,6 +7,7 @@ import json
 import os
 import signal
 from servo import servo
+from process_mgmt import kill_pids_of_port
 
 import logging
 
@@ -55,6 +56,7 @@ class signaling(object):
 
         servo_positions = [0, 0]
         report_url = self.url + "/report"
+        ssh_pipe = None
 
         while True:
             try:
@@ -72,10 +74,10 @@ class signaling(object):
                 continue
 
             if 'reset' == reply["mode"]:
-                Popen(["pkill", "ssh"])  # kill ssh
                 self.des_queue_x.put(0)  # reset servo_x
                 self.des_queue_y.put(0)  # reset servo_y
-                sshActive = False
+                kill_pids_of_port(self.server_ip, 22)
+                del ssh_pipe
 
             if 'management' == reply["mode"]:  # management mode
                 # TODO: Shutdown all the operational video
@@ -153,20 +155,30 @@ class signaling(object):
 
                 if ("type" in options and options["type"] == "ssh"):
                     if ("op" in options and options["op"] == "start"):
-                        Popen(["ssh", "-R",
-                               str(10000+self.dev_id) +
-                               ":localhost:22",
-                               "dev@"+self.server_ip,
-                               "-o StrictHostKeyChecking=no", "&"],
-                              stdout=PIPE,
-                              stderr=PIPE)
-                        response["tunnel_opened"] = True
+                        logging.warning("ssh started")
+                        if ssh_pipe is None:
+                            ssh_pipe = Popen(["ssh", "-R",
+                                             str(10000+self.dev_id) +
+                                              ":localhost:22",
+                                              "dev@"+self.server_ip,
+                                              "-o StrictHostKeyChecking=no",
+                                              "-N", "&"])
+                            #                  "-o StrictHostKeyChecking=no",
+                            #                  "&"],
+                            #                 stdout=PIPE,
+                            #                 stderr=PIPE)
+                            response["tunnel_opened"] = True
                     if ("op" in options and options["op"] == "stop"):
-                        Popen(["pkill", "ssh"])  # kill ssh
+                        logging.warning("ssh stopped")
+                        kill_pids_of_port(self.server_ip, 22)
+                        del ssh_pipe
+                        ssh_pipe = None
                         response["tunnel_opened"] = False
 
+                    """
                     if ("op" in options and options["op"] == "restart"):
-                        Popen(["pkill", "ssh"])  # kill ssh
+                        kill_pids_of_port(self.server_ip, 22)
+                        sleep(1)
                         Popen(["ssh", "-R",
                                str(10000+self.dev_id) +
                                ":localhost:22",
@@ -175,7 +187,7 @@ class signaling(object):
                               stdout=PIPE,
                               stderr=PIPE)
                         response["tunnel_opened"] = True
-
+                    """
                 # TODO update script
                 # if ('update' in ans and ans['update']):
                 #    pass

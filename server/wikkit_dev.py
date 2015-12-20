@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import db_conn as db
 import ConfigParser
 import os
-from process_mgmt import kill_pids_of_port
+# from process_mgmt import kill_pids_of_port
 
 """
 Code by bovenyan
@@ -47,7 +47,7 @@ def dev_check_status(devId):
         db_api.device_reset_mgmt(devId)
         db_api.device_reset_op(devId)
         reply["mode"] = "reset"
-        kill_pids_of_port(10000+devId)
+        # kill_pids_of_port(10000+devId)
         return jsonify(reply)
 
     if (manage_flags % 2 == 0):  # tested
@@ -61,7 +61,7 @@ def dev_check_status(devId):
         db_api.device_reset_mgmt(devId)
         db_api.device_reset_op(devId)
         reply["mode"] = "reset"
-        kill_pids_of_port(10000+devId)
+        # kill_pids_of_port(10000+devId)
         return jsonify(reply)   # reset ssh
 
     if (datetime.now() - last_updated > timedelta(0, manage_timeout,  # tested
@@ -105,13 +105,13 @@ def dev_check_status(devId):
         db_api.device_reset_user(devId)  # reset for next immediately
         return jsonify(reply)
     if (ssh_enable and ssh_disable):
-        kill_pids_of_port(10000+devId)
+        # kill_pids_of_port(10000+devId)
         reply["options"]["type"] = "ssh"
         db_api.device_reset_user(devId)  # reset for next immediately
         reply["options"]["op"] = "restart"
         return jsonify(reply)
     if (ssh_disable and not ssh_enable):
-        kill_pids_of_port(10000+devId)
+        # kill_pids_of_port(10000+devId)
         reply["options"]["type"] = "ssh"
         db_api.device_reset_user(devId)  # reset for next immediately
         reply["options"]["op"] = "stop"
