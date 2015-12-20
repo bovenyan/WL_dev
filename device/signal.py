@@ -67,6 +67,7 @@ class signaling(object):
 
             except Exception, e:
                 logging.error(str(e))
+                sleep(5)
                 continue
 
             if not isinstance(reply, dict) or len(reply) != 3:
