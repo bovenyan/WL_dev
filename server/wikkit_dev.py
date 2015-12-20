@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify, abort, send_from_directory
+from subprocess import Popen
 from datetime import datetime, timedelta
 import db_conn as db
 import ConfigParser
 import os
+from process_mgmt import fetch_pid_of_port
 
 """
 Code by bovenyan
@@ -42,10 +44,11 @@ def dev_check_status(devId):
     manage_flags = int(record[1])
     print manage_flags
 
-    if ((manage_flags >> 4) % 2 != 0):  #
+    if ((manage_flags >> 4) % 2 != 0):  # tested
         db_api.device_reset_mgmt(devId)
         db_api.device_reset_op(devId)
         reply["mode"] = "reset"
+        Popen("kill", str(fetch_pid_of_port(10000+devId)))
         return jsonify(reply)
 
     if (manage_flags % 2 == 0):  # tested
@@ -59,6 +62,7 @@ def dev_check_status(devId):
         db_api.device_reset_mgmt(devId)
         db_api.device_reset_op(devId)
         reply["mode"] = "reset"
+        Popen("kill", str(fetch_pid_of_port(10000+devId)))
         return jsonify(reply)   # reset ssh
 
     if (datetime.now() - last_updated > timedelta(0, manage_timeout,  # tested
