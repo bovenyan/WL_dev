@@ -150,6 +150,7 @@ class cam(object):
     def _handle_ssh(self, element):  # tested
         if (element[0] == "start"):
             response = requests.post(self.url+"/ssh/start")
+            print response
             if (response.ok and "port" in response.json()):
                 print "ssh tunnel started, please:"
                 print "1. logon dev@cloud"
@@ -160,7 +161,7 @@ class cam(object):
             return
 
         if (element[0] == "stop"):
-            response = requests.post(self.url+"/ssh/start")
+            response = requests.post(self.url+"/ssh/stop")
             if (response.ok):
                 print "ssh stopped"
             return

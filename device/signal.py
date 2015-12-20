@@ -49,10 +49,8 @@ class signaling(object):
 
         self.process = Process(target=self.signal_channel, args=())
         self.process.start()
-        self.ssh = None
 
     def signal_channel(self):
-        sshActive = False
         headers = {'Content-Type': 'application/json'}
 
         servo_positions = [0, 0]
@@ -155,31 +153,27 @@ class signaling(object):
 
                 if ("type" in options and options["type"] == "ssh"):
                     if ("op" in options and options["op"] == "start"):
-                        if (not sshActive):
-                            self.ssh = Popen(["ssh", "-R",
-                                              str(10000+self.dev_id) +
-                                              ":localhost:22",
-                                              "dev@"+self.server_ip,
-                                              "-o StrictHostKeyChecking=no"],
-                                             stdout=PIPE,
-                                             stderr=PIPE)
-                            sshActive = True
+                        Popen(["ssh", "-R",
+                               str(10000+self.dev_id) +
+                               ":localhost:22",
+                               "dev@"+self.server_ip,
+                               "-o StrictHostKeyChecking=no", "&"],
+                              stdout=PIPE,
+                              stderr=PIPE)
                         response["tunnel_opened"] = True
                     if ("op" in options and options["op"] == "stop"):
                         Popen(["pkill", "ssh"])  # kill ssh
-                        sshActive = False
                         response["tunnel_opened"] = False
 
                     if ("op" in options and options["op"] == "restart"):
                         Popen(["pkill", "ssh"])  # kill ssh
-                        self.ssh = Popen(["ssh", "-R",
-                                          str(10000+self.dev_id) +
-                                          ":localhost:22",
-                                          "dev@"+self.server_ip,
-                                          "-o StrictHostKeyChecking=no"],
-                                         stdout=PIPE,
-                                         stderr=PIPE)
-                        sshActive = True
+                        Popen(["ssh", "-R",
+                               str(10000+self.dev_id) +
+                               ":localhost:22",
+                               "dev@"+self.server_ip,
+                               "-o StrictHostKeyChecking=no", "&"],
+                              stdout=PIPE,
+                              stderr=PIPE)
                         response["tunnel_opened"] = True
 
                 # TODO update script

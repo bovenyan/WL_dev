@@ -117,7 +117,6 @@ def dev_check_status(devId):
         reply["options"]["op"] = "stop"
         return jsonify(reply)
 
-
     # TODO script updating
     # update = bool((op_codes >> 6) % 2)
     # commit = False
@@ -238,7 +237,7 @@ def usr_take_picture(devId, op):
     return jsonify({"success": False})
 
 
-@app.route("/usr/<int:devId>/ssh/<op>", methods=['GET'])   # tested
+@app.route("/usr/<int:devId>/ssh/<op>", methods=['POST'])   # tested
 def usr_enable_ssh(devId, op):
     if (db_api.user_check_dev_mgmt(devId)):
         if (op == "start"):
