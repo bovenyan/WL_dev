@@ -30,9 +30,9 @@ class signaling(object):
         self.blaster = open('/dev/servoblaster', 'w')
 
         # debug **
-        self.debug_count = 10
-        self.debug_url = "http://"+"127.0.0.1:8000"+"/dev/"+str(self.dev_id)
-        self.debug_report_url = self.debug_url + "/report"
+        # self.debug_count = 10
+        # self.debug_url = "http://"+"127.0.0.1:8000"+"/dev/"+str(self.dev_id)
+        # self.debug_report_url = self.debug_url + "/report"
         # debug **
 
         lock = Lock()
@@ -46,7 +46,7 @@ class signaling(object):
         self.process = Process(target=self.signal_channel, args=())
         self.process.start()
         self.ssh = None
-
+        self.sshActive = False
 
     def signal_channel(self):
         headers = {'Content-Type': 'application/json'}
@@ -55,11 +55,6 @@ class signaling(object):
         report_url = self.url + "/report"
 
         while True:
-            #if (self.debug_count == 0):
-            #    self.url = self.debug_url
-            if (not self.debug_count):
-                self.debug_count = self.debug_count - 1
-
             try:
                 reply = requests.get(self.url + "/status", timeout=5)
                 reply = reply.json()
@@ -76,6 +71,7 @@ class signaling(object):
                 Popen(["pkill", "ssh"])  # kill ssh
                 self.des_queue_x.put(0)  # reset servo_x
                 self.des_queue_y.put(0)  # reset servo_y
+                self.sshActive = False
 
             if 'management' == reply["mode"]:  # management mode
                 # TODO: Shutdown all the operational video
@@ -154,6 +150,10 @@ class signaling(object):
                             response["picture"] = False
 
                 if ("type" in options and options["type"] == "ssh"):
+                    if (self.sshActive):
+                        Popen(["pkill", "ssh"])  # kill ssh
+                        sleep(1)
+
                     self.ssh = Popen(["ssh", "-R",
                                       str(10000+self.dev_id) + ":localhost:22",
                                       "dev@"+self.server_ip,
@@ -172,8 +172,7 @@ class signaling(object):
                 # TODO check conn
 
                 try:
-                    resp = requests.post(self.debug_report_url,
-                    # resp = requests.post(report_url,
+                    resp = requests.post(report_url,
                                          data=json.dumps(response),
                                          headers=headers,
                                          timeout=5)
@@ -187,7 +186,6 @@ class signaling(object):
         self.process.terminate()
         self.servo_x.disable_servo()
         self.servo_y.disable_servo()
-
 
 if __name__ == "__main__":
     ss = signaling("/home/pi/wikkit/signal/config.ini")
