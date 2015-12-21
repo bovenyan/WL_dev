@@ -101,7 +101,7 @@ class cam(object):
         print "             stop a tunnel e.g. >ssh stop"
         print "             restart a tunnel e.g. >ssh restart"
         print "         "
-        print "         turn the servo: e.g. >servo posision 30 50"
+        print "         turn the servo: e.g. >servo position 30 50"
         print "         "
         print "         reset the device: e.g. >reset"
         print "             Note: this will only reset ssh, not servo position"
