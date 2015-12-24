@@ -1,7 +1,6 @@
 import MySQLdb
-# import os
 import ConfigParser
-
+from datetime import datetime
 
 class db_api(object):
     def __init__(self, conf_path):
@@ -156,6 +155,18 @@ class db_api(object):
             print str(e)
             return False
 
+    def get_lastseen(self, dev_id):
+        try:
+            conn = self.conn()
+            cur = conn.cursor()
+            cur.execute("select last_seen from {} \
+                        where id={}".format(self.tablename, dev_id))
+            res = cur.fetchone()
+            return res[0]
+        except Exception, e:
+            print str(e)
+            return datetime.min
+
     def set_device(self, dev_id, mgmt_flags, op_codes, usr_dev=True):
         try:
             conn = self.conn()
@@ -186,10 +197,14 @@ class db_api(object):
             return False
 
     def enable_mgmt(self, dev_id, usr_dev=True):
-        return self.set_device(dev_id, 1, 0, usr_dev)
+        if (self.get_mgmt_flag(dev_id)):  # already mgmt
+            return [True, True]
+        else:
+            return [self.set_device(dev_id, 5, 0, usr_dev),  # need wait
+                False]
 
     def disable_mgmt(self, dev_id, usr_dev=True):
-        return self.set_device(dev_id, 0, 0, usr_dev)
+        return self.set_device(dev_id, 4, 0, usr_dev)
 
     # device DB_APIs
     def device_get_rec(self, dev_id):
@@ -256,6 +271,10 @@ class db_api(object):
 
     def device_reset_user(self, dev_id):
         mgmt_flag = self.get_mgmt_flag(dev_id, False)
+
+        if (not mgmt_flag & 4):  # no need to reset
+            return True
+
         mgmt_flag = mgmt_flag & (~4)
         return self.set_mgmt_flag(dev_id, mgmt_flag, False)
 
@@ -272,7 +291,9 @@ class db_api(object):
     # API for ursers
     def user_check_dev_mgmt(self, dev_id):
         manage_f = self.get_mgmt_flag(dev_id)
-        return bool(manage_f & 1)
+        op_codes = self.get_op_codes(dev_id)
+        return (bool(manage_f & 1) and   # mgmt must be 1, mgmt must be applied
+                (op_codes != 0 or (not bool(manage_f & 4))))
 
     def user_check_dev_fetch(self, dev_id):
         manage_f = self.get_mgmt_flag(dev_id)

@@ -17,7 +17,7 @@ config.read("./config.ini")
 manage_timeout = int(config.get('opconfig', 'manageTO'))
 ssh_timeout = int(config.get('opconfig', 'sshTO'))
 file_dir = "./"
-
+notify_reset = False
 
 @app.route("/")
 def index():
@@ -42,36 +42,38 @@ def dev_check_status(devId):
     last_updated = record[0]
     manage_flags = int(record[1])
 
-
-    if ((manage_flags >> 4) % 2 != 0):  # tested
+    # RESET MODE OR FLOP TO RESET
+    if ((manage_flags >> 4) % 2 != 0):  # reset
         db_api.device_reset_mgmt(devId)
         db_api.device_reset_op(devId)
         reply["mode"] = "reset"
         return jsonify(reply)
 
-    if (manage_flags % 2 == 0):  # tested
-        reply["mode"] = "operation"
-        return jsonify(reply)
-
-    # handle management timeout
-    reply["mode"] = "management"
-    if (datetime.now() - last_updated > timedelta(0, ssh_timeout,  # tested
+    if (datetime.now() - last_updated > timedelta(0, ssh_timeout,  # ssh timeout
                                                   0)):
         db_api.device_reset_mgmt(devId)
         db_api.device_reset_op(devId)
         reply["mode"] = "reset"
-        # kill_pids_of_port(10000+devId)
         return jsonify(reply)   # reset ssh
 
-    if (datetime.now() - last_updated > timedelta(0, manage_timeout,  # tested
+    # OPERATIONAL MODE
+    if (manage_flags % 2 == 0):  # operation
+        reply["mode"] = "operation"
+        db_api.device_reset_user(devId)
+        return jsonify(reply)
+
+    # MANAGEMENT MODE
+    reply["mode"] = "management"
+    # management timeout
+    if (datetime.now() - last_updated > timedelta(0, manage_timeout,
                                                   0)):
         db_api.device_reset_mgmt(devId)
         db_api.device_reset_op(devId)
         reply["mode"] = "operation"
         return jsonify(reply)   # flop to operation
 
-    # no apply or result not ready
-    if ((manage_flags >> 2) % 2 == 0 or (manage_flags >> 3) % 2 != 0):  # tested
+    # no user_bz or result not ready
+    if ((manage_flags >> 2) % 2 == 0 or (manage_flags >> 3) % 2 != 0):
         return jsonify(reply)  # do nothing , keep managing
 
     # management options
@@ -83,8 +85,9 @@ def dev_check_status(devId):
         reply["options"]["type"] = "servo"
         reply["options"]["servo_turn_mode"] = bool((op_codes >> 1) % 2)
         reply["options"]["servo_inc_xy"] = int((op_codes >> 2) % 4)
-        reply["options"]["pos_x"] = int(record[3])
-        reply["options"]["pos_y"] = int(record[4])
+        reply["options"]["pos_x"] = int(record[2])
+        reply["options"]["pos_y"] = int(record[3])
+        print "reply: " + str(reply)
         db_api.device_reset_user(devId)  # reset for next immediately
         return jsonify(reply)
 
@@ -123,7 +126,7 @@ def dev_check_status(devId):
         # commit = bool((op_codes >> 7) % 2)
     #    pass
 
-    # operation not recognized
+    # enable management
     db_api.device_reset_user(devId)
     return jsonify(reply)
 
@@ -174,12 +177,27 @@ def dev_post_picture(devId):
 
 
 # User API
+@app.route("/usr/<int:devId>/mode", methods=['GET'])  # tested
+def usr_check_mgmt(devId):
+    return jsonify({"is_mgmt": db_api.user_check_dev_mgmt(devId)})
+
+
 @app.route("/usr/<int:devId>/mode", methods=['POST'])  # tested
 def usr_enable_mgmt(devId):
     content = request.json
     if (isinstance(content, bool)):
         if (bool(content)):
-            return jsonify({"success": db_api.enable_mgmt(devId)})
+            result = db_api.enable_mgmt(devId)
+
+            if (not result[1]):  # need wait
+                wait = timedelta(0, 10, 0) - (datetime.now() -
+                                              db_api.get_lastseen(devId))
+                wait = wait.seconds
+
+                return jsonify({"success": True,
+                                "wait": wait})
+            else:  # already set
+                return jsonify({"success": True})
         else:
             return jsonify({"success": db_api.disable_mgmt(devId)})
 
@@ -202,8 +220,9 @@ def usr_move_servo(devId):
                                   content['pos_x'],
                                   content['pos_y'])
             return jsonify({"success": True})
+        return jsonify({"success": False, "is_mgmt": True})
 
-    return jsonify({"success": False})
+    return jsonify({"success": False, "is_mgmt": False})
 
 """
 cam-1 shot -> cam-1 fetch code -> cam-1 fetch file
@@ -215,29 +234,30 @@ def usr_take_picture(devId, op):
     if (db_api.user_check_dev_mgmt(devId)):
         if (op == 'shot'):
             return jsonify({"success":
-                            db_api.user_take_pic(devId)})
+                            db_api.user_take_pic(devId),
+                            "is_mgmt": True})
 
         if (op == 'query'):
             if (db_api.user_check_dev_fetch(devId)):
                 return jsonify({"success": True,
-                                "file": str(devId)})
-            return jsonify({"success": False})
+                                "file": str(devId),
+                                "is_mgmt": True})
+            return jsonify({"success": False,
+                            "is_mgmt": True})
 
         if (op == 'get'):
             content = request.json
             if (isinstance(content, dict) and "file" in content):
                 return send_from_directory(file_dir,
                                            "dev_" + str(devId) + '.jpg')
-            return jsonify({"success": False})
+            return jsonify({"success": False,
+                            "is_mgmt": True})
 
-        if (op == 'fetched'):
-            db_api.enable_mgmt(devId)
-
-    return jsonify({"success": False})
+    return jsonify({"success": False, "is_mgmt": False})
 
 
 @app.route("/usr/<int:devId>/ssh/<op>", methods=['POST'])   # tested
-def usr_enable_ssh(devId, op):
+def usr_control_ssh(devId, op):
     if (db_api.user_check_dev_mgmt(devId)):
         if (op == "start"):
             return jsonify({"success": db_api.user_ssh_enable(devId),
@@ -255,19 +275,7 @@ def usr_enable_ssh(devId, op):
             return jsonify({"success": db_api.user_ssh_restart(devId),
                             "port": 10000+devId})
 
-
-@app.route("/usr/<int:devId>/mode", methods=['POST'])
-def usr_set_mode(devId):
-    content = request.json
-    if (isinstance(content, list)):
-        if ('mgmt' in content):
-            db_api.user_enable_mgmt(devId)
-            return jsonify({"success": True})
-        if ('oper' in content):
-            db_api.user_disable_mgmt(devId)
-            return jsonify({"success": True})
-
-    return jsonify({"success": False})
+    return jsonify({"success": False, "is_mgmt": False})
 
 
 @app.route("/usr/<int:devId>/reset", methods=['POST'])
