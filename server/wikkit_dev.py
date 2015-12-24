@@ -49,7 +49,7 @@ def dev_check_status(devId):
         reply["mode"] = "reset"
         return jsonify(reply)
 
-    if (datetime.now() - last_updated > timedelta(0, ssh_timeout,  # tested
+    if (datetime.now() - last_updated > timedelta(0, ssh_timeout,  # ssh timeout
                                                   0)):
         db_api.device_reset_mgmt(devId)
         db_api.device_reset_op(devId)
@@ -64,7 +64,7 @@ def dev_check_status(devId):
 
     # MANAGEMENT MODE
     reply["mode"] = "management"
-    # flop back to operational
+    # management timeout
     if (datetime.now() - last_updated > timedelta(0, manage_timeout,
                                                   0)):
         db_api.device_reset_mgmt(devId)
@@ -72,8 +72,8 @@ def dev_check_status(devId):
         reply["mode"] = "operation"
         return jsonify(reply)   # flop to operation
 
-    # no apply or result not ready
-    if ((manage_flags >> 2) % 2 == 0 or (manage_flags >> 3) % 2 != 0):  # tested
+    # no user_bz or result not ready
+    if ((manage_flags >> 2) % 2 == 0 or (manage_flags >> 3) % 2 != 0):
         return jsonify(reply)  # do nothing , keep managing
 
     # management options
@@ -85,8 +85,9 @@ def dev_check_status(devId):
         reply["options"]["type"] = "servo"
         reply["options"]["servo_turn_mode"] = bool((op_codes >> 1) % 2)
         reply["options"]["servo_inc_xy"] = int((op_codes >> 2) % 4)
-        reply["options"]["pos_x"] = int(record[3])
-        reply["options"]["pos_y"] = int(record[4])
+        reply["options"]["pos_x"] = int(record[2])
+        reply["options"]["pos_y"] = int(record[3])
+        print "reply: " + str(reply)
         db_api.device_reset_user(devId)  # reset for next immediately
         return jsonify(reply)
 
@@ -189,7 +190,8 @@ def usr_enable_mgmt(devId):
             result = db_api.enable_mgmt(devId)
 
             if (not result[1]):  # need wait
-                wait = (timedelta(0, 10, 0) - (datetime.now() - result[1]))
+                wait = timedelta(0, 10, 0) - (datetime.now() -
+                                              db_api.get_lastseen(devId))
                 wait = wait.seconds
 
                 return jsonify({"success": True,
@@ -218,7 +220,7 @@ def usr_move_servo(devId):
                                   content['pos_x'],
                                   content['pos_y'])
             return jsonify({"success": True})
-        return jsonify({"success": False, "is_mgmt": True}
+        return jsonify({"success": False, "is_mgmt": True})
 
     return jsonify({"success": False, "is_mgmt": False})
 
@@ -255,7 +257,7 @@ def usr_take_picture(devId, op):
 
 
 @app.route("/usr/<int:devId>/ssh/<op>", methods=['POST'])   # tested
-def usr_enable_ssh(devId, op):
+def usr_control_ssh(devId, op):
     if (db_api.user_check_dev_mgmt(devId)):
         if (op == "start"):
             return jsonify({"success": db_api.user_ssh_enable(devId),
@@ -272,6 +274,8 @@ def usr_enable_ssh(devId, op):
             db_api.user_ssh_restart(devId)
             return jsonify({"success": db_api.user_ssh_restart(devId),
                             "port": 10000+devId})
+
+    return jsonify({"success": False, "is_mgmt": False})
 
 
 @app.route("/usr/<int:devId>/reset", methods=['POST'])

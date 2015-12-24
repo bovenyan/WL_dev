@@ -39,11 +39,13 @@ class cam(object):
                 content = response.json()
                 if ("wait" in content):
                     wait = int(content["wait"])
-                    print "Management Set, Device not ready... Please wait..."
+                    print "Management Set, Device not ready..."
                     if (wait > 1800):
                         print "Fatal: Device haven't been seen for too long."
                         print "Please Notify Administrator asap."
                         return
+
+                    print "Please wait for " + str(wait) + " seconds"
                     sleep(wait)
                 print "Device management ready"
                 self.manage_mode = True
@@ -57,9 +59,10 @@ class cam(object):
             return
 
         if (element[0] == "exit"):  # tested
-            confirm = raw_input("return operational ?(y/N):")
-            if (confirm == 'y' or confirm == 'Y'):
-                self._reset_operation()
+            if (self.manage_mode):
+                confirm = raw_input("return operational ?(y/N):")
+                if (confirm == 'y' or confirm == 'Y'):
+                    self._reset_operation()
             self.active = False
             return
 
@@ -174,11 +177,10 @@ class cam(object):
     def _handle_ssh(self, element):  # tested
         if (element[0] == "start"):
             response = requests.post(self.url+"/ssh/start")
-            print response
-            if (response.ok and "port" in response.json()):
-                print "ssh tunnel started, please:"
-                print "1. logon dev@cloud"
-                print "2. cloud> ssh pi@localhost -p " + \
+            if (self._validate_response(response) and
+               "port" in response.json()):
+                print "ssh tunnel started, please login with another terminal"
+                print "> ssh pi@alicloud -p " + \
                     str(response.json()["port"])
             else:
                 print "failed to start..."
@@ -186,7 +188,7 @@ class cam(object):
 
         if (element[0] == "stop"):
             response = requests.post(self.url+"/ssh/stop")
-            if (response.ok):
+            if (self._validate_response(response)):
                 print "ssh stopped"
             return
 
