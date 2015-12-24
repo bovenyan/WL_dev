@@ -1,5 +1,6 @@
 import requests
 import json
+from time import sleep
 # from pressKey import press
 
 headers = {'Content-Type': 'application/json'}
@@ -11,6 +12,10 @@ class cam(object):
         self.url = url + str(int(dev_id))
         self.active = True
         self.manage_mode = False
+        response = requests.get(self.url + "/mode", headers=headers)
+        if (response.ok and not (response.json() is None)):
+            if ("is_mgmt" in response.json()):
+                self.manage_mode = response.json()["is_mgmt"]
         self.fileAdapt = fileAdapt
 
     def route_query(self, query):
@@ -31,10 +36,20 @@ class cam(object):
             response = requests.post(self.url + "/mode",
                                      headers=headers, data=json.dumps(True))
             if (self._validate_response(response)):
+                content = response.json()
+                if ("wait" in content):
+                    wait = int(content["wait"])
+                    print "Management Set, Device not ready... Please wait..."
+                    if (wait > 1800):
+                        print "Fatal: Device haven't been seen for too long."
+                        print "Please Notify Administrator asap."
+                        return
+                    sleep(wait)
+                print "Device management ready"
                 self.manage_mode = True
                 return
             else:
-                print "not yet ready... please wait for 5 min"
+                print "Failed..."
                 return
 
         if (element[0] == "operation"):  # tested
@@ -73,7 +88,14 @@ class cam(object):
         if (response.ok):
             content = response.json()
             if ("success" in content):
-                return content["success"]
+                if (content["success"]):
+                    return True
+                else:
+                    if ("is_mgmt" in content and not content["is_mgmt"]):
+                        self.manage_mode = False
+                        print "Not in Management Mode, Perhaps the device"
+                        print "timeouts. Please enable management mode again"
+                        return False
             else:
                 print "Warning Impossible Output, mind MIM attack "
         return False
@@ -84,7 +106,7 @@ class cam(object):
         if (self._validate_response(response)):
             self.manage_mode = False
         else:
-            print "failed to set operation"
+            print "Failed..."
             return
 
     def _print_help(self):
@@ -111,7 +133,9 @@ class cam(object):
 
     def _handle_camera(self, element):
         if (element[0] == "shot"):
-            requests.post(self.url + "/picture/shot")
+            response = requests.post(self.url + "/picture/shot")
+            if (not self._validate_response(response)):
+                print "Failed..."
             return
 
         if (element[0] == "query"):
@@ -136,7 +160,7 @@ class cam(object):
                     print "Warning: impossible output, mind MIM attack"
 
             else:
-                print "device busy, try again later or reset device"
+                print "Failed... device busy, try again later or reset device"
 
         if (element[0] == "get" and len(element) == 2):
             file_url = self.url + "/picture/get"

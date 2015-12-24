@@ -186,10 +186,14 @@ class db_api(object):
             return False
 
     def enable_mgmt(self, dev_id, usr_dev=True):
-        return self.set_device(dev_id, 1, 0, usr_dev)
+        if (self.get_mgmt_flag(dev_id)):  # already mgmt
+            return [True, True]
+        else:
+            return [self.set_device(dev_id, 5, 0, usr_dev),  # need wait
+                False]
 
     def disable_mgmt(self, dev_id, usr_dev=True):
-        return self.set_device(dev_id, 0, 0, usr_dev)
+        return self.set_device(dev_id, 4, 0, usr_dev)
 
     # device DB_APIs
     def device_get_rec(self, dev_id):
@@ -280,6 +284,18 @@ class db_api(object):
         if (not (manage_f & 4) and (manage_f & 8)):
             return True
         return False
+
+    def user_check_dev_lastseen(self, dev_id):
+        try:
+            conn = self.conn()
+            cur = conn.cursor()
+            cur.execute("select last_seen from {}, \
+                        where id={}".format(self.tablename, dev_id))
+            res = cur.fetchone()
+            return res[0]
+        except Exception, e:
+            print str(e)
+            return False
 
     def user_servo_inc(self, dev_id, inc_dec, xy):
         self.set_mgmt_flag(dev_id, 5)
