@@ -196,13 +196,6 @@ class db_api(object):
             print str(e)
             return False
 
-    def enable_mgmt(self, dev_id, usr_dev=True):
-        if (self.get_mgmt_flag(dev_id)):  # already mgmt
-            return [True, True]
-        else:
-            return [self.set_device(dev_id, 5, 0, usr_dev),  # need wait
-                False]
-
     def disable_mgmt(self, dev_id, usr_dev=True):
         return self.set_device(dev_id, 4, 0, usr_dev)
 
@@ -294,6 +287,13 @@ class db_api(object):
         op_codes = self.get_op_codes(dev_id)
         return (bool(manage_f & 1) and   # mgmt must be 1, mgmt must be applied
                 (op_codes != 0 or (not bool(manage_f & 4))))
+
+    def usr_enable_mgmt(self, dev_id, usr_dev=True):
+        if (self.user_check_dev_mgmt(dev_id)):  # already mgmt
+            return [True, True]
+        else:
+            return [self.set_device(dev_id, 5, 0, usr_dev),  # need wait
+                    False]
 
     def user_check_dev_fetch(self, dev_id):
         manage_f = self.get_mgmt_flag(dev_id)

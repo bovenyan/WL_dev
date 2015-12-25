@@ -187,17 +187,17 @@ def usr_enable_mgmt(devId):
     content = request.json
     if (isinstance(content, bool)):
         if (bool(content)):
-            result = db_api.enable_mgmt(devId)
+            result = db_api.usr_enable_mgmt(devId)
 
             if (not result[1]):  # need wait
                 wait = timedelta(0, 600, 0) - (datetime.now() -
-                                              db_api.get_lastseen(devId))
+                                               db_api.get_lastseen(devId))
                 wait = wait.seconds
 
                 return jsonify({"success": True,
                                 "wait": wait})
             else:  # already set
-                return jsonify({"success": True})
+                return jsonify({"success": result[0]})
         else:
             return jsonify({"success": db_api.disable_mgmt(devId)})
 
