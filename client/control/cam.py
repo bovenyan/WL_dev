@@ -39,6 +39,7 @@ class cam(object):
                 content = response.json()
                 if ("wait" in content):
                     wait = int(content["wait"])
+                    print wait
                     print "Management Set, Device not ready..."
                     if (wait > 1800):
                         print "Fatal: Device haven't been seen for too long."
