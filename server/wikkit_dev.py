@@ -9,6 +9,7 @@ from process_mgmt import kill_pids_of_port
 Code by bovenyan
 """
 
+APP_VERSION = "1.0"
 app = Flask(__name__)
 db_api = db.db_api("./config.ini")
 
@@ -18,6 +19,7 @@ manage_timeout = int(config.get('opconfig', 'manageTO'))
 ssh_timeout = int(config.get('opconfig', 'sshTO'))
 file_dir = "./"
 notify_reset = False
+
 
 @app.route("/")
 def index():
@@ -177,6 +179,11 @@ def dev_post_picture(devId):
 
 
 # User API
+@app.route("/usr/version", methods=['GET'])
+def usr_check_version():
+    return jsonify({"version": APP_VERSION})
+
+
 @app.route("/usr/<int:devId>/mode", methods=['GET'])  # tested
 def usr_check_mgmt(devId):
     return jsonify({"is_mgmt": db_api.user_check_dev_mgmt(devId)})
