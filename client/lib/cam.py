@@ -180,7 +180,11 @@ class cam(object):
             if (self._validate_response(response) and
                "port" in response.json()):
                 print "ssh tunnel started, please login with another terminal"
-                print "> ssh pi@alicloud -p " + \
+                print "If you are logging in a raspberryPi, do:"
+                print "> ssh pi@<alicloud IP> -p " + \
+                    str(response.json()["port"])
+                print "If you are logging in a tk1, do:"
+                print "> ssh ubuntu@<alicloud IP> -p " + \
                     str(response.json()["port"])
             else:
                 print "failed to start..."

@@ -23,8 +23,12 @@ try:
     response = requests.get(url + "version", headers=headers)
     if (response.ok and isinstance(response.json(), dict) and
        "version" in response.json()):
-        if (response.json()["version"] != version):
-            print "Local Version is outdated, Please run \"git pull\" to update"
+        serverVersion = response.json()["version"]
+        if (serverVersion != version):
+            print "Local Version is outdated, server version is " + "v" + \
+                serverVersion
+            print "Please run \"git pull\" to update the entire repository"
+            print "And run \"git checkout " + "v" + serverVersion
         else:
             print_welcome()
             print "Version 1.0"
@@ -48,6 +52,7 @@ while(negotiated):
         if (element[0] == "help"):  # tested
             print "**** You are in normal mode****"
             print "Type an device id to enter device mode: e.g. >cam-1"
+            print "NOTE!!!: in version V1.0, tk-1 machine is cam-2"
             print "Exit this platform: e.g. exit"
 
         if (element[0] == "exit"):  # tested
