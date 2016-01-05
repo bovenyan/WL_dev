@@ -71,7 +71,7 @@ class cam(object):
 
             print "Renew " + str(time) + " minutes for management mode"
 
-            response = requests.post(self.url + "/renew/" + str(time))
+            response = requests.post(self.url + "/renew/" + str(time*60))
 
             if (not self._validate_response(response)):
                 print "failed..."
@@ -255,7 +255,7 @@ class cam(object):
                     return
             response = requests.post(self.url + "/ssh/renew",
                                      headers=headers,
-                                     data=json.dumps(time))
+                                     data=json.dumps(time*60))
             if (not self._validate_response(response)):
                 print "failed..."
             else:

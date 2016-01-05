@@ -52,6 +52,25 @@ class db_api(object):
         conn.close()
 
     # dev basic operation
+    def update_activity(self, dev_id, usr_dev=True):
+        try:
+            conn = self.conn()
+            cur = conn.cursor()
+
+            if (usr_dev):
+                cur.execute("update {} \
+                            set last_operation=now() \
+                            where id={}".format(self.tablename, dev_id))
+            else:
+                cur.execute("update {} \
+                            set last_seen=now() \
+                            where id={}".format(self.tablename, dev_id))
+            conn.commit()
+            conn.close()
+            return True
+        except Exception, e:
+            print str(e)
+            return False
 
     def get_mgmt_flag(self, dev_id, usr_dev=True):
         try:

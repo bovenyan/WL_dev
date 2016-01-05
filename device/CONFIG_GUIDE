@@ -1,0 +1,15 @@
+# install servobalster
+    git clone https://github.com/richardghirst/PiBits.git
+    cd PiBits/ServoBlaster/user/
+    make
+    sudo make install
+
+# install wl_platform
+    sudo apt-get install vim 
+
+    generate ssh-key (for each clone as well)
+    test dev@aliCloud connectivity
+    create ssh config
+
+    create stanza with id on cloud
+    add key to dev@aliCloud

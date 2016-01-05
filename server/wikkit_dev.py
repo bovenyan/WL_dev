@@ -226,10 +226,11 @@ def usr_enable_mgmt(devId):
 def usr_renew_mgmt(devId, time):
     if (db_api.user_check_dev_mgmt(devId)):
         global manage_timeout
-        if (time > 30):
+        if (time > 30*60):
             return jsonify({"success": False, "is_mgmt": True})
         else:
             manage_timeout = max(time, manage_timeout)
+            db_api.update_activity(devId)
             return jsonify({"success": True, "is_mgmt": True})
 
     return jsonify({"success": False, "is_mgmt": False})
@@ -288,10 +289,11 @@ def usr_take_picture(devId, op):
             content = request.json
 
             if (isinstance(content, int)):
-                if content > 90:
+                if content > 90*60:
                     return jsonify({"success": False})
                 else:
                     global ssh_timeout
+                    db_api.update_activity(devId)
                     ssh_timeout = max(content, ssh_timeout)
                     return jsonify({"success": True})
             else:

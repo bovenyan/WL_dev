@@ -213,6 +213,6 @@ class signaling(object):
         self.servo_y.disable_servo()
 
 if __name__ == "__main__":
-    ss = signaling("/home/pi/wikkit/signal/config.ini")
+    ss = signaling("/opt/wikkit/signal/config.ini")
     signal.pause()
     ss.distroy_channel()
