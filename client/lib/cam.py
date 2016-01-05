@@ -143,13 +143,14 @@ class cam(object):
         print "Enter Management mode: e.g. >management"
         print "     In management mode, you can:"
         print "         shot a picture: e.g. >camera shot"
-        print "         query the id of the newest picture: e.g. >camera query"
-        print "         get the picture: e.g. >camera get <PICTURE ID>"
+        print "         To fetch a picture, please use sftp or scp"
         print "         "
-        print "         enable an ssh tunnel from cloud to the camera"
+        print "         create access to the device (ssh/sftp/scp):"
         print "             start a tunnel e.g. >ssh start"
         print "             stop a tunnel e.g. >ssh stop"
         print "             restart a tunnel e.g. >ssh restart"
+        print "             renew n minutes for ssh e.g. >ssh renew 20"
+        print "             Note: by default ssh has a hard timeout of 10 min"
         print "         "
         print "         turn the servo: e.g. >servo position 30 50"
         print "         "
@@ -165,7 +166,10 @@ class cam(object):
             if (not self._validate_response(response)):
                 print "Failed..."
             return
-
+        if (element[0] == "archive"):
+            pass
+        # disable inband fetching of pictures, please use ssh
+        """
         if (element[0] == "query"):
             response = requests.post(self.url + "/picture/query")
             if (self._validate_response(response)):
@@ -198,48 +202,49 @@ class cam(object):
                                          remote_file_name,
                                          file_name)
             requests.post(self.url+"/picture/fetched")
+        """
+    def _print_ssh_help(self, response):
+        if (self._validate_response(response) and
+           "port" in response.json()):
+            openPort = response.json()["port"]
+            print "ssh tunnel started, please login with another terminal"
+            print "If you are logging in a raspberryPi, do:"
+            print "   > ssh pi@<alicloud IP> -p " + str(openPort)
+            print "   > sftp -P " + str(openPort) + " pi@<alicloud IP>"
+            print "If you are logging in a tk1, do:"
+            print "   > ssh ubuntu@<alicloud IP> -p " + str(openPort)
+            print "   > sftp -P " + str(openPort) + " pi@<alicloud IP>"
+        else:
+            print "failed to start..."
 
-    def _handle_ssh(self, element):  # tested
+    def _handle_ssh(self, element):
         if (element[0] == "start"):
             response = requests.post(self.url+"/ssh/start")
-            if (self._validate_response(response) and
-               "port" in response.json()):
-                print "ssh tunnel started, please login with another terminal"
-                print "If you are logging in a raspberryPi, do:"
-                print "> ssh pi@<alicloud IP> -p " + \
-                    str(response.json()["port"])
-                print "If you are logging in a tk1, do:"
-                print "> ssh ubuntu@<alicloud IP> -p " + \
-                    str(response.json()["port"])
-            else:
-                print "failed to start..."
-            return
+            self._print_ssh_help(response)
 
         if (element[0] == "stop"):
             response = requests.post(self.url+"/ssh/stop")
             if (self._validate_response(response)):
                 print "ssh stopped"
+            else:
+                print "failed to stop"
             return
 
         if (element[0] == "restart"):
             response = requests.post(self.url+"/ssh/restart")
-            if (response.ok and "port" in response.json()):
-                print "ssh tunnel started, please:"
-                print "1. logon dev@cloud"
-                print "2. cloud> ssh pi@localhost -p " + \
-                    str(response.json()["port"])
-            else:
-                print "failed to start..."
+            self._print_ssh_help(response)
             return
 
         if (element[0] == "zombie"):
             res = raw_input("Are you sure the ssh tunnel turns zombie? (y/N)")
             if (res == 'y' or res == 'Y'):
+                print "Killing Zombies..."
                 response = requests.post(self.url + "/ssh/zombie")
-                print "reset before making a new ssh tunnel. resetting..."
+                print "Resetting..."
                 response = requests.post(self.url+"/ssh/restart")
+                self._print_ssh_help(response)
             else:
-                print "try again at cloud >ssh@localhost -p <designated port>"
+                print "Abort..."
             return
 
         if (element[0] == "renew"):
@@ -260,6 +265,7 @@ class cam(object):
             if (not self._validate_response(response)):
                 print "failed..."
             else:
+                print "Renewed " + str(time) + " minutes."
                 return
 
         self._print_help()
