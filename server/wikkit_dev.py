@@ -222,7 +222,7 @@ def usr_enable_mgmt(devId):
     return jsonify({"success": False})
 
 
-@app.route("/usr/<int:devId>/renew/<int:time>")
+@app.route("/usr/<int:devId>/renew/<int:time>", methods=["POST"])
 def usr_renew_mgmt(devId, time):
     if (db_api.user_check_dev_mgmt(devId)):
         global manage_timeout
