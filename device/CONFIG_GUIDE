@@ -1,15 +1,60 @@
+# enable raspi camera:
+    sudo raspi-config
+
+    check: sudo raspistill -o test.jpg
+
 # install servobalster
     git clone https://github.com/richardghirst/PiBits.git
     cd PiBits/ServoBlaster/user/
     make
     sudo make install
 
-# install wl_platform
-    sudo apt-get install vim 
+    check: servod
 
-    generate ssh-key (for each clone as well)
-    test dev@aliCloud connectivity
+# install vim 
+    sudo apt-get install vim
+
+# add repository mirrors
+    /etc/apt/sources.list
+        http://mirrors.ustc.edu.cn/raspbian/raspbian/
+        http://mirrors.zju.edu.cn/raspbian/raspbian/
+
+    sudo apt-get update
+
+# register device ## clone req 
+    create stanza with id on cloud 
+        INSERT into DEVICE_DEV (id) VALUES (<id No.>)
+
+    generate ssh-key 
+        ssh-keygen -t rsa -b 4096 -C "rasPi2@wikkit.dev"
+        password empty
+    
+    add key to dev@aliCloud <@cloud>
+
+    check: ssh dev@aliCloud
+    
     create ssh config
+        
 
-    create stanza with id on cloud
-    add key to dev@aliCloud
+# install packages
+    sudo apt-get install python-pip
+    sudo apt-get install python-dev
+    sudo pip install psutil
+    sudo pip install requests 
+    sudo pip install ConfigParser
+
+# install wl_platform
+    sudo mkdir /opt/wikkit
+    sudo mkdir /opt/wikkit/signal
+    sudo chown pi:pi /opt/wikkit
+    sudo chown pi:pi /opt/wikkit/signal
+    
+    doubleCheck config.ini:
+        ...
+        mgmtSleep=2
+        opSleep=600
+        ...
+
+# install opencv
+    sudo apt-get install build-essential cmake pkg-config
+
