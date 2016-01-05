@@ -222,6 +222,7 @@ class cam(object):
         if (element[0] == "start"):
             response = requests.post(self.url+"/ssh/start")
             self._print_ssh_help(response)
+            return
 
         if (element[0] == "stop"):
             response = requests.post(self.url+"/ssh/stop")
