@@ -285,19 +285,6 @@ def usr_take_picture(devId, op):
             return jsonify({"success": False,
                             "is_mgmt": True})
 
-        if (op == "renew"):
-            content = request.json
-
-            if (isinstance(content, int)):
-                if content > 90*60:
-                    return jsonify({"success": False})
-                else:
-                    global ssh_timeout
-                    db_api.update_activity(devId)
-                    ssh_timeout = max(content, ssh_timeout)
-                    return jsonify({"success": True})
-            else:
-                return jsonify({"success": False})
 
     return jsonify({"success": False, "is_mgmt": False})
 
@@ -320,6 +307,20 @@ def usr_control_ssh(devId, op):
             db_api.user_ssh_restart(devId)
             return jsonify({"success": db_api.user_ssh_restart(devId),
                             "port": 10000+devId})
+
+        if (op == "renew"):
+            content = request.json
+
+            if (isinstance(content, int)):
+                if content > 90*60:
+                    return jsonify({"success": False})
+                else:
+                    global ssh_timeout
+                    db_api.update_activity(devId)
+                    ssh_timeout = max(content, ssh_timeout)
+                    return jsonify({"success": True})
+            else:
+                return jsonify({"success": False})
 
     return jsonify({"success": False, "is_mgmt": False})
 
