@@ -1,5 +1,7 @@
-# enable raspi camera:
+# enable raspi camera and expand filesystem:
     sudo raspi-config
+        expand file system
+        enable camera
 
     check: sudo raspistill -o test.jpg
 
@@ -66,5 +68,7 @@
         crontab -e 
         @reboot python /opt/wikkit/signal/signal.py > /opt/wikkit/signal/signal.log
 # install opencv
-    sudo apt-get install build-essential cmake pkg-config
-
+    sudo apt-get -y install build-essential cmake cmake-curses-gui pkg-config libpng12-0 libpng12-dev libpng++-dev libpng3 libpnglite-dev zlib1g-dbg zlib1g zlib1g-dev pngtools libtiff4-dev libtiff4 libtiffxx0c2 libtiff-tools libeigen3-dev 
+    sudo apt-get -y install libjpeg8 libjpeg8-dev libjpeg8-dbg libjpeg-progs ffmpeg libavcodec-dev libavcodec53 libavformat53 libavformat-dev libgstreamer0.10-0-dbg libgstreamer0.10-0 libgstreamer0.10-dev libxine1-ffmpeg libxine-dev libxine1-bin libunicap2 libunicap2-dev swig libv4l-0 libv4l-dev python-numpy libpython2.6 python-dev python2.6-dev libgtk2.0-dev 
+    wget http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/2.4.8/opencv-2.4.8.zip/download opencv-2.4.8.zip
+    
