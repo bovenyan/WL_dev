@@ -33,6 +33,9 @@ def index():
 # DEVICE API
 @app.route("/dev/<int:devId>/status", methods=['GET'])
 def dev_check_status(devId):
+    global ssh_timeout
+    global manage_timeout
+
     record = db_api.device_get_rec(devId)
 
     if record is None:
@@ -49,6 +52,8 @@ def dev_check_status(devId):
         db_api.device_reset_mgmt(devId)
         db_api.device_reset_op(devId)
         reply["mode"] = "reset"
+        manage_timeout = int(config.get('opconfig', 'manageTO'))
+        ssh_timeout = int(config.get('opconfig', 'sshTO'))
         return jsonify(reply)
 
     if (datetime.now() - last_updated > timedelta(0, ssh_timeout,  # ssh timeout
@@ -56,6 +61,8 @@ def dev_check_status(devId):
         db_api.device_reset_mgmt(devId)
         db_api.device_reset_op(devId)
         reply["mode"] = "reset"
+        manage_timeout = int(config.get('opconfig', 'manageTO'))
+        ssh_timeout = int(config.get('opconfig', 'sshTO'))
         return jsonify(reply)   # reset ssh
 
     # OPERATIONAL MODE
@@ -108,17 +115,21 @@ def dev_check_status(devId):
         reply["options"]["op"] = "start"
         db_api.device_reset_user(devId)  # reset for next immediately
         return jsonify(reply)
+
     if (ssh_enable and ssh_disable):
         # kill_pids_of_port(10000+devId)
         reply["options"]["type"] = "ssh"
         db_api.device_reset_user(devId)  # reset for next immediately
+        ssh_timeout = int(config.get('opconfig', 'sshTO'))
         reply["options"]["op"] = "restart"
         return jsonify(reply)
+
     if (ssh_disable and not ssh_enable):
         # kill_pids_of_port(10000+devId)
         reply["options"]["type"] = "ssh"
         db_api.device_reset_user(devId)  # reset for next immediately
         reply["options"]["op"] = "stop"
+        ssh_timeout = int(config.get('opconfig', 'sshTO'))
         return jsonify(reply)
 
     # TODO script updating
@@ -211,6 +222,19 @@ def usr_enable_mgmt(devId):
     return jsonify({"success": False})
 
 
+@app.route("/usr/<int:devId>/renew/<int:time>")
+def usr_renew_mgmt(devId, time):
+    if (db_api.user_check_dev_mgmt(devId)):
+        global manage_timeout
+        if (time > 30):
+            return jsonify({"success": False, "is_mgmt": True})
+        else:
+            manage_timeout = max(time, manage_timeout)
+            return jsonify({"success": True, "is_mgmt": True})
+
+    return jsonify({"success": False, "is_mgmt": False})
+
+
 @app.route("/usr/<int:devId>/servo", methods=['POST'])
 def usr_move_servo(devId):
     if (db_api.user_check_dev_mgmt(devId)):
@@ -259,6 +283,19 @@ def usr_take_picture(devId, op):
                                            "dev_" + str(devId) + '.jpg')
             return jsonify({"success": False,
                             "is_mgmt": True})
+
+        if (op == "renew"):
+            content = request.json
+
+            if (isinstance(content, int)):
+                if content > 90:
+                    return jsonify({"success": False})
+                else:
+                    global ssh_timeout
+                    ssh_timeout = max(content, ssh_timeout)
+                    return jsonify({"success": True})
+            else:
+                return jsonify({"success": False})
 
     return jsonify({"success": False, "is_mgmt": False})
 

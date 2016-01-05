@@ -54,6 +54,30 @@ class cam(object):
                 print "Failed..."
                 return
 
+        if (element[0] == "renew"):
+            response = requests.post(self.url + "/renew")
+            time = 15
+
+            if (len(element) > 1):
+                try:
+                    time = int(element[1])
+                    if time > 30:
+                        print "Renew up to 30 minutes, please retry ..."
+                        return
+                except Exception, e:
+                    print str(e)
+                    self._print_help()
+                    return
+
+            print "Renew " + str(time) + " minutes for management mode"
+
+            response = requests.post(self.url + "/renew/" + str(time))
+
+            if (not self._validate_response(response)):
+                print "failed..."
+
+            return
+
         if (element[0] == "operation"):  # tested
             self._reset_operation()
             return
@@ -217,6 +241,26 @@ class cam(object):
                 print "try again at cloud >ssh@localhost -p <designated port>"
             return
 
+        if (element[0] == "renew"):
+            time = 15
+            if (len(element) > 1):
+                try:
+                    time = int(element[1])
+                    if (time > 90):
+                        print "Renew up to 90 minuts for ssh, please retry..."
+                        return
+                except Exception, e:
+                    print str(e)
+                    self._print_help()
+                    return
+            response = requests.post(self.url + "/ssh/renew",
+                                     headers=headers,
+                                     data=json.dumps(time))
+            if (not self._validate_response(response)):
+                print "failed..."
+            else:
+                return
+
         self._print_help()
 
     def _handle_servo(self, element):  # tested
@@ -260,7 +304,7 @@ class cam(object):
                 print "exiting monitor mode... Bye"
                 continue
             """
-            self.print_help()
+            self._print_help()
         except Exception, e:
             print str(e)
-            self.print_help()
+            self._print_help()
