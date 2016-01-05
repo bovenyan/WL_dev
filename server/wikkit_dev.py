@@ -104,7 +104,7 @@ def dev_check_status(devId):
     picture = bool((op_codes >> 4) % 2)   # tested
     if (picture):
         reply["options"]["type"] = "picture"
-        db_api.device_set_busy(devId)
+        db_api.device_reset_user(devId)  # reset for next immediately
         return jsonify(reply)
 
     # ssh enable
@@ -268,7 +268,8 @@ def usr_take_picture(devId, op):
             return jsonify({"success":
                             db_api.user_take_pic(devId),
                             "is_mgmt": True})
-
+        return jsonify({"success": False, "is_mgmt": True})
+        """
         if (op == 'query'):
             if (db_api.user_check_dev_fetch(devId)):
                 return jsonify({"success": True,
@@ -284,7 +285,7 @@ def usr_take_picture(devId, op):
                                            "dev_" + str(devId) + '.jpg')
             return jsonify({"success": False,
                             "is_mgmt": True})
-
+        """
 
     return jsonify({"success": False, "is_mgmt": False})
 
