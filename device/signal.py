@@ -24,6 +24,7 @@ class signaling(object):
         self.op_sleep = int(config.get("signalConfig", "opSleep"))
         self.server_ip = config.get("signalConfig", "serverIP")
         self.server_port = str(int(config.get("signalConfig", "serverPort")))
+        self.dev_type = config.get("signalConfig", "devType")
         self.rest_addr = self.server_ip + ":" + self.server_port
         self.url = "http://" + self.rest_addr + "/dev/" + str(self.dev_id)
 
@@ -32,7 +33,7 @@ class signaling(object):
         self.cur_queue_x = Queue()
         self.cur_queue_y = Queue()
 
-        self.blaster = open('/dev/servoblaster', 'w')
+        self.blaster = None
 
         # debug **
         # self.debug_count = 10
@@ -41,17 +42,23 @@ class signaling(object):
         # debug **
 
         lock = Lock()
-        self.servo_x = servo(config, 0, self.blaster, lock,
-                             self.des_queue_x, self.cur_queue_x)
-        self.servo_y = servo(config, 1, self.blaster, lock,
-                             self.des_queue_y, self.cur_queue_y)
+        self.servo_x = None
+        self.servo_y = None
+        self.step = 0
 
-        self.step = int(config.get("servoConfig", "step"))
+        if (self.dev_type == "pi"):
+            self.blaster = open('/dev/servoblaster', 'w')
+            self.servo_x = servo(config, 0, self.blaster, lock,
+                                 self.des_queue_x, self.cur_queue_x)
+            self.servo_y = servo(config, 1, self.blaster, lock,
+                                 self.des_queue_y, self.cur_queue_y)
 
-        self.process = Process(target=self.signal_channel, args=())
+            self.step = int(config.get("servoConfig", "step"))
+
+        self.process = Process(target=self.signal_channel, args=(self.dev_type, ))
         self.process.start()
 
-    def signal_channel(self):
+    def signal_channel(self, dev_type):
         headers = {'Content-Type': 'application/json'}
 
         servo_positions = [0, 0]
@@ -74,8 +81,9 @@ class signaling(object):
                 continue
 
             if 'reset' == reply["mode"]:
-                self.des_queue_x.put(0)  # reset servo_x
-                self.des_queue_y.put(0)  # reset servo_y
+                if (dev_type == "pi"):
+                    self.des_queue_x.put(0)  # reset servo_x
+                    self.des_queue_y.put(0)  # reset servo_y
                 kill_pids_of_port(self.server_ip, 22)
                 del ssh_pipe
                 ssh_pipe = None
@@ -88,7 +96,8 @@ class signaling(object):
                     continue
 
                 response = {}
-                if ("type" in options and options["type"] == "servo"):
+                if ("type" in options and options["type"] == "servo"
+                   and dev_type == "pi"):
                     servo_turn_mode = 0
                     servo_inc_xy = 0
                     pos_x = 0
@@ -128,7 +137,8 @@ class signaling(object):
                         logging.error(str(e))
                         logging.warning("invalid servo input")
 
-                if ("type" in options and options["type"] == "picture"):
+                if ("type" in options and options["type"] == "picture"
+                   and dev_type == "pi"):
                     filename = "dev_" + str(self.dev_id) + ".jpg"
                     os.popen("rm " + filename)
                     os.popen("raspistill -t 10 -o " + filename + " &")
