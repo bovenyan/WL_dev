@@ -51,10 +51,20 @@
     
     doubleCheck config.ini:
         ...
+        devId=<id>
+        devType=<type>
         mgmtSleep=2
         opSleep=600
         ...
+    
+    check: 
+        
+    put to run in background
+        sudo python signal.py >  
 
+    add crontab to enable auto startup
+        crontab -e 
+        @reboot python /opt/wikkit/signal/signal.py > /opt/wikkit/signal/signal.log
 # install opencv
     sudo apt-get install build-essential cmake pkg-config
 

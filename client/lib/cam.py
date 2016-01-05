@@ -30,6 +30,7 @@ class cam(object):
 
         if (element[0] == "reset"):  # tested
             requests.post(self.url+"/reset")
+            self.manage_mode = False
             return
 
         if (element[0] == "management"):  # tested
