@@ -151,6 +151,7 @@ class cam(object):
         print "             restart a tunnel e.g. >ssh restart"
         print "             renew n minutes for ssh e.g. >ssh renew 20"
         print "             Note: by default ssh has a hard timeout of 10 min"
+        print "             Danger: fix dead ssh tunnel: e.g. >ssh zombie"
         print "         "
         print "         turn the servo: e.g. >servo position 30 50"
         print "         "
