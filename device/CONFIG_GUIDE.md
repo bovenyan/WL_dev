@@ -64,12 +64,12 @@ Follow this page to configure Wikkit Sensors
   - Clone this repository and install the contents in the device folder in /opt/wikkit/signal
     
   - Modify `config.ini`
-    ...
+    ```ini
     devId=<id No.>
     devType=<type>
     mgmtSleep=2
     opSleep=600
-    ...
+    ```
     
   - Run the python to run in background
         sudo python signal.py >  
