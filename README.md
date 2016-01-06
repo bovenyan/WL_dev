@@ -8,7 +8,7 @@ WikkitDev has three different modules: client is deployed on any PC devices, ser
 
 1. see [Client Deployment Guide]
 2. see [Server Deployment Guide]
-3. see [Device Deployment Guide]
+3. see [Device Deployment Guide](http://github.com/bovenyan/WL_dev/device/CONFIG_GUIDE.md)
 
 ## Realease Notes
 
