@@ -50,11 +50,11 @@ Follow this page to configure Wikkit Sensors
   - Create `~/.ssh/config`
         
 
-## Install packages
-    sudo apt-get install python-pip, python-dev
-    sudo pip install psutil, requests, ConfigParser
+## Install basic tools
+    sudo apt-get install python-pip python-dev
+    sudo pip install psutil requests ConfigParser
 
-## Install wl_platform
+## Install WikkitDev device repositories
   - Create directories
     sudo mkdir /opt/wikkit
     sudo mkdir /opt/wikkit/signal
@@ -78,8 +78,8 @@ Follow this page to configure Wikkit Sensors
     crontab -e 
     @reboot python /opt/wikkit/signal/signal.py > /opt/wikkit/signal/signal.log
 
-## Install opencv
-  - Install necessary packages
+## Install OpenCV
+  - Install dependent packages
     sudo apt-get -y install build-essential cmake cmake-curses-gui pkg-config libpng12-0 libpng12-dev libpng++-dev libpng3 libpnglite-dev zlib1g-dbg zlib1g zlib1g-dev pngtools libtiff4-dev libtiff4 libtiffxx0c2 libtiff-tools libeigen3-dev 
     sudo apt-get -y install libjpeg8 libjpeg8-dev libjpeg8-dbg libjpeg-progs ffmpeg libavcodec-dev libavcodec53 libavformat53 libavformat-dev libgstreamer0.10-0-dbg libgstreamer0.10-0 libgstreamer0.10-dev libxine1-ffmpeg libxine-dev libxine1-bin libunicap2 libunicap2-dev swig libv4l-0 libv4l-dev python-numpy libpython2.6 python-dev python2.6-dev libgtk2.0-dev 
 
