@@ -6,6 +6,7 @@ class TK1(WikkitDevice):
         self.dev_type = 1
         self.url = url + "tk1/"
         self.dev_id = dev_id
+        self.name = "TK1-" + str(dev_id)
 
         super(TK1, self).__init__(self.url, dev_id, 0)
 

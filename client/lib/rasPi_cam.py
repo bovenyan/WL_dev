@@ -10,6 +10,7 @@ class RasPiCam(WikkitDevice):
         self.dev_type = 0
         self.url = url + "piCam/"
         self.dev_id = dev_id
+        self.name = "piCam-" + str(dev_id)
 
         super(RasPiCam, self).__init__(self.url, dev_id, 0)
 
