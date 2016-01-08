@@ -27,6 +27,9 @@ class signaling(object):
         self.dev_type = config.get("signalConfig", "devType")
         self.rest_addr = self.server_ip + ":" + self.server_port
         self.url = "http://" + self.rest_addr + "/dev/" + str(self.dev_id)
+        init_pos = config.get("servoConfig", "servoXY")
+        init_pos = init_pos.split(",")
+        init_pos = [int(init_pos[0]), int(init_pos[1])]
 
         self.des_queue_x = Queue()
         self.des_queue_y = Queue()
@@ -56,13 +59,12 @@ class signaling(object):
             self.step = int(config.get("servoConfig", "step"))
 
         self.process = Process(target=self.signal_channel,
-                               args=(self.dev_type, ))
+                               args=(self.dev_type, init_pos,))
         self.process.start()
 
-    def signal_channel(self, dev_type):
+    def signal_channel(self, dev_type, servo_positions=[0,0]):
         headers = {'Content-Type': 'application/json'}
 
-        servo_positions = [0, 0]
         report_url = self.url + "/report"
         ssh_pipe = None
 
@@ -97,8 +99,8 @@ class signaling(object):
                     continue
 
                 response = {}
-                if ("type" in options and options["type"] == "servo" and
-                   dev_type == "pi"):
+                if ("type" in options and options["type"] == "servo"
+                   and dev_type == "pi"):
                     servo_turn_mode = 0
                     servo_inc_xy = 0
                     pos_x = 0
@@ -138,22 +140,20 @@ class signaling(object):
                         logging.error(str(e))
                         logging.warning("invalid servo input")
 
-                if ("type" in options and options["type"] == "picture" and
-                   dev_type == "pi"):
+                if ("type" in options and options["type"] == "picture"
+                   and dev_type == "pi"):
                     filename = "dev_" + str(self.dev_id) + ".jpg"
                     os.popen("rm " + filename)
                     os.popen("raspistill -t 10 -o " + filename + " &")
                     sleep(1)  # wait for picture to take
 
-                    # disable upload to cloud
-                    # TODO: interface reserved only for cloud Sync of Pic
-                    """
                     try:
                         open(filename)
                     except IOError:
                         logging.error("cannot open")
                         response["picture"] = False
                     else:
+                        # TODO check conn
                         try:
                             resp = requests.post(self.url + "/picture",
                                                  files={"file": open(filename,
@@ -166,8 +166,6 @@ class signaling(object):
                                 response["picture"] = False
                         except Exception, e:
                             logging.error(str(e))
-                    """
-                    response["picture"] = True
 
                 if ("type" in options and options["type"] == "ssh"):
                     if ("op" in options and options["op"] == "start"):
@@ -179,6 +177,10 @@ class signaling(object):
                                               "dev@"+self.server_ip,
                                               "-o StrictHostKeyChecking=no",
                                               "-N", "&"])
+                            #                  "-o StrictHostKeyChecking=no",
+                            #                  "&"],
+                            #                 stdout=PIPE,
+                            #                 stderr=PIPE)
                             response["tunnel_opened"] = True
                     if ("op" in options and options["op"] == "stop"):
                         logging.warning("ssh stopped")
