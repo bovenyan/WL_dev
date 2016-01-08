@@ -99,8 +99,8 @@ class signaling(object):
                     continue
 
                 response = {}
-                if ("type" in options and options["type"] == "servo"
-                   and dev_type == "pi"):
+                if ("type" in options and options["type"] == "servo" and
+                   dev_type == "pi"):
                     servo_turn_mode = 0
                     servo_inc_xy = 0
                     pos_x = 0
@@ -140,13 +140,13 @@ class signaling(object):
                         logging.error(str(e))
                         logging.warning("invalid servo input")
 
-                if ("type" in options and options["type"] == "picture"
-                   and dev_type == "pi"):
+                if ("type" in options and options["type"] == "picture" and
+                   dev_type == "pi"):
                     filename = "dev_" + str(self.dev_id) + ".jpg"
                     os.popen("rm " + filename)
                     os.popen("raspistill -t 10 -o " + filename + " &")
                     sleep(1)  # wait for picture to take
-
+                    """
                     try:
                         open(filename)
                     except IOError:
@@ -166,6 +166,8 @@ class signaling(object):
                                 response["picture"] = False
                         except Exception, e:
                             logging.error(str(e))
+                    """
+                    response["picture"] = False
 
                 if ("type" in options and options["type"] == "ssh"):
                     if ("op" in options and options["op"] == "start"):
@@ -177,10 +179,6 @@ class signaling(object):
                                               "dev@"+self.server_ip,
                                               "-o StrictHostKeyChecking=no",
                                               "-N", "&"])
-                            #                  "-o StrictHostKeyChecking=no",
-                            #                  "&"],
-                            #                 stdout=PIPE,
-                            #                 stderr=PIPE)
                             response["tunnel_opened"] = True
                     if ("op" in options and options["op"] == "stop"):
                         logging.warning("ssh stopped")
