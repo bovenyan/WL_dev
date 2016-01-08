@@ -68,6 +68,10 @@ class signaling(object):
         report_url = self.url + "/report"
         ssh_pipe = None
 
+        if (dev_type == "pi"):
+            self.des_queue_x.put(servo_positions[0])  # reset servo_x
+            self.des_queue_y.put(servo_positions[1])  # reset servo_y
+
         while True:
             try:
                 reply = requests.get(self.url + "/status", timeout=5)
@@ -85,8 +89,8 @@ class signaling(object):
 
             if 'reset' == reply["mode"]:
                 if (dev_type == "pi"):
-                    self.des_queue_x.put(0)  # reset servo_x
-                    self.des_queue_y.put(0)  # reset servo_y
+                    self.des_queue_x.put(servo_positions[0])  # reset servo_x
+                    self.des_queue_y.put(servo_positions[1])  # reset servo_y
                 kill_pids_of_port(self.server_ip, 22)
                 del ssh_pipe
                 ssh_pipe = None
