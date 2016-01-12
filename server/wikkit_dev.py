@@ -195,13 +195,13 @@ def usr_check_version():
     return jsonify({"version": APP_VERSION})
 
 
-@app.route("/usr/<int:devId>/mode", methods=['GET'])  # tested
-def usr_check_mgmt(devId):
-    return jsonify({"is_mgmt": db_api.user_check_dev_mgmt(devId)})
+@app.route("/usr/<dev_type>/<int:dev_id>/mode", methods=['GET'])  # tested
+def usr_check_mgmt(dev_type, dev_id):
+    return jsonify({"is_mgmt": db_api.user_check_dev_mgmt(dev_type, dev_id)})
 
 
-@app.route("/usr/<int:devId>/mode", methods=['POST'])  # tested
-def usr_enable_mgmt(devId):
+@app.route("/usr/<dev_type>/<int:dev_id>/mode", methods=['POST'])  # tested
+def usr_enable_mgmt(dev_type, dev_id):
     content = request.json
     if (isinstance(content, bool)):
         if (bool(content)):
@@ -222,8 +222,8 @@ def usr_enable_mgmt(devId):
     return jsonify({"success": False})
 
 
-@app.route("/usr/<int:devId>/renew/<int:time>", methods=["POST"])
-def usr_renew_mgmt(devId, time):
+@app.route("/usr/<devType>/<int:devId>/renew/<int:time>", methods=["POST"])
+def usr_renew_mgmt(devType, devId, time):
     if (db_api.user_check_dev_mgmt(devId)):
         global manage_timeout
         if (time > 30*60):
