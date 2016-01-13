@@ -6,8 +6,9 @@ headers = {'Content-Type': 'application/json'}
 
 
 class WikkitDevice(object):
-    def __init__(self, dev_url, dev_type):
-        self.url = dev_url
+    def __init__(self, url, dev_type, dev_id):
+        self.url = url + dev_type + "/" + str(dev_id)
+        self.dev_id = dev_id
         self.active = True
         self.manage_mode = False
         self.dev_type = dev_type
@@ -167,12 +168,12 @@ class WikkitDevice(object):
            "port" in response.json()):
             openPort = response.json()["port"]
 
-            if (self.dev_type == 0):
+            if (self.dev_type == "piCam"):
                 print "ssh tunnel started, please login with another terminal"
                 print "   > ssh pi@<alicloud IP> -p " + str(openPort)
                 print "   > sftp -P " + str(openPort) + " pi@<alicloud IP>"
-            if (self.dev_type == 1):
-                print "If you are logging in a tk1, do:"
+            if (self.dev_type == "tk1"):
+                print "ssh tunnel started, please login with another terminal"
                 print "   > ssh ubuntu@<alicloud IP> -p " + str(openPort)
                 print "   > sftp -P " + str(openPort) + " pi@<alicloud IP>"
 

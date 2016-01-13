@@ -26,7 +26,8 @@ class signaling(object):
         self.server_port = str(int(config.get("signalConfig", "serverPort")))
         self.dev_type = config.get("signalConfig", "devType")
         self.rest_addr = self.server_ip + ":" + self.server_port
-        self.url = "http://" + self.rest_addr + "/dev/" + str(self.dev_id)
+        self.url = "http://" + self.rest_addr + "/dev/" + \
+            self.dev_type + str(self.dev_id)
 
         self.des_queue_x = Queue()
         self.des_queue_y = Queue()
@@ -208,10 +209,10 @@ class signaling(object):
                 # TODO check conn
 
                 try:
-                    resp = requests.post(report_url,
-                                         data=json.dumps(response),
-                                         headers=headers,
-                                         timeout=5)
+                    requests.post(report_url,
+                                  data=json.dumps(response),
+                                  headers=headers,
+                                  timeout=5)
                 except Exception, e:
                     logging.error(str(e))
 

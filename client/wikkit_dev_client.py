@@ -1,6 +1,6 @@
 import ConfigParser
 import requests
-from lib.RasPiCam import RasPiCam
+from lib.rasPi_cam import RasPiCam
 from lib.tk1 import TK1
 from lib.welcome import print_welcome
 

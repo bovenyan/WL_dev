@@ -3,12 +3,7 @@ from wikkit_device import WikkitDevice
 
 class TK1(WikkitDevice):
     def __init__(self, url, dev_id):
-        self.dev_type = 1
-        self.url = url + "tk1/"
-        self.dev_id = dev_id
-        self.name = "TK1-" + str(dev_id)
-
-        super(TK1, self).__init__(self.url, dev_id, 0)
+        super(TK1, self).__init__(url, "tk1", dev_id)
 
     def route_query(self, query):
         if super(TK1, self).route_query(query):

@@ -7,12 +7,7 @@ headers = {'Content-Type': 'application/json'}
 
 class RasPiCam(WikkitDevice):
     def __init__(self, url, dev_id):
-        self.dev_type = 0
-        self.url = url + "piCam/"
-        self.dev_id = dev_id
-        self.name = "piCam-" + str(dev_id)
-
-        super(RasPiCam, self).__init__(self.url, dev_id, 0)
+        super(RasPiCam, self).__init__(url, "piCam",  dev_id)
 
     def route_query(self, query):
         if super(RasPiCam, self).route_query(query):

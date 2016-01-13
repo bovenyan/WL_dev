@@ -13,7 +13,8 @@ class req_handler(object):
 
         self.dbi = db_api(self.config, dev_type)
         self.manage_timeout = None
-        self.operate_timeout = int(self.config.get('opconfig', 'opTO'))
+        self.operate_sleep = int(self.config.get('opconfig', 'operateSL'))
+        self.maxSshRenew = int(self.config.get('opconfig', 'maxSshRenew'))
         self.ssh_timeout = None
         self.reset_timeout()
 
@@ -164,7 +165,7 @@ class req_handler(object):
 
             if op == "renew":
                 if isinstance(content, int):
-                    if content <= 0 and content > 90*60:
+                    if content <= 0 and content > self.maxSshRenew:
                         return {"success": False}
                     else:
                         self.dbi.update_activity(dev_id)
