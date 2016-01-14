@@ -34,7 +34,7 @@ class cam_signaling(wikkit_signaling):
         self.cur_queue_x.put(0)
 
     def _handle_mgmt(self, reply, options):
-        response = super(cam_signaling, self)._handle_mgmt(reply)
+        response = super(cam_signaling, self)._handle_mgmt(reply, options)
 
         if ("type" in options and options["type"] == "servo" and
            self.dev_type == "piCam"):
@@ -86,7 +86,8 @@ class cam_signaling(wikkit_signaling):
             filename = str(self.dev_type) + "-" + \
                 str(self.dev_id) + ".jpg"
             os.popen("rm " + filename)
-            os.popen("raspistill -w 640 -h 480 -t -q 50 -o  " + filename + " &")
+            os.popen("raspistill -w 640 -h 480 -t 1 -q 50 -o  " + \
+                     filename + " &")
             sleep(1)  # wait for picture to take
             response["picture"] = True
 

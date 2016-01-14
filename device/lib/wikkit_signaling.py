@@ -68,7 +68,7 @@ class wikkit_signaling(object):
     def _handle_oper(self, reply):
         sleep(self.op_sleep)
 
-    def run(self, dev_type):
+    def run(self):
         headers = {'Content-Type': 'application/json'}
         report_url = self.url + "/report"
 
@@ -107,5 +107,5 @@ class wikkit_signaling(object):
                 except Exception, e:
                     logging.error(str(e))
 
-            if 'operation' == reply["mote"]:
+            if 'operation' == reply["mode"]:
                 self._handle_oper(reply)
