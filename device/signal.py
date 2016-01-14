@@ -27,7 +27,7 @@ class signaling(object):
         self.dev_type = config.get("signalConfig", "devType")
         self.rest_addr = self.server_ip + ":" + self.server_port
         self.url = "http://" + self.rest_addr + "/dev/" + \
-            self.dev_type + str(self.dev_id)
+            self.dev_type + "/" + str(self.dev_id)
 
         self.des_queue_x = Queue()
         self.des_queue_y = Queue()
@@ -47,7 +47,7 @@ class signaling(object):
         self.servo_y = None
         self.step = 0
 
-        if (self.dev_type == "pi"):
+        if (self.dev_type == "piCam"):
             self.blaster = open('/dev/servoblaster', 'w')
             self.servo_x = servo(config, 0, self.blaster, lock,
                                  self.des_queue_x, self.cur_queue_x)
@@ -83,7 +83,7 @@ class signaling(object):
                 continue
 
             if 'reset' == reply["mode"]:
-                if (dev_type == "pi"):
+                if (dev_type == "piCam"):
                     self.des_queue_x.put(0)  # reset servo_x
                     self.des_queue_y.put(0)  # reset servo_y
                 kill_pids_of_port(self.server_ip, 22)
@@ -99,7 +99,7 @@ class signaling(object):
 
                 response = {}
                 if ("type" in options and options["type"] == "servo" and
-                   dev_type == "pi"):
+                   dev_type == "piCam"):
                     servo_turn_mode = 0
                     servo_inc_xy = 0
                     pos_x = 0
@@ -122,10 +122,14 @@ class signaling(object):
                             self.des_queue_x.put(pos_x)
                             self.des_queue_y.put(pos_y)
 
+                        sleep(1)
+
                         if (not self.cur_queue_x.empty()):
                             servo_positions[0] = self.cur_queue_x.get()
                         if (not self.cur_queue_y.empty()):
                             servo_positions[1] = self.cur_queue_y.get()
+
+                        print "servo position " + str(servo_positions)
 
                         if (servo_positions[0] == pos_x and
                            servo_positions[1] == pos_y):
@@ -140,8 +144,10 @@ class signaling(object):
                         logging.warning("invalid servo input")
 
                 if ("type" in options and options["type"] == "picture" and
-                   dev_type == "pi"):
-                    filename = "dev_" + str(self.dev_id) + ".jpg"
+                   dev_type == "piCam"):
+                    print "I'm taking picture"
+                    filename = str(self.dev_type) + "-" + \
+                        str(self.dev_id) + ".jpg"
                     os.popen("rm " + filename)
                     os.popen("raspistill -t 10 -o " + filename + " &")
                     sleep(1)  # wait for picture to take

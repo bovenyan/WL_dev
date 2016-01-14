@@ -19,7 +19,7 @@ class RasPiCam(WikkitDevice):
             self._print_help()
             return True
 
-        if (element[0] == "shot"):   # take picture
+        if (element[0] == "camera"):   # take picture
             if (len(element) > 1):
                 self._handle_camera(element[1:])
             else:
@@ -36,15 +36,16 @@ class RasPiCam(WikkitDevice):
         return False
 
     def _print_help(self):
-        print "Status: You are controlling piCam-" + str(self.dev_id)
+        print "You are controlling piCam-" + str(self.dev_id)
         super(RasPiCam, self)._print_help()
         if (self.manage_mode):
-            print "         shot a picture: e.g. >camera shot"
-            print "             To fetch a picture, please use sftp or scp"
-            print "             The picture is named dev_<device ID>.jpg in ~"
-            print "         "
-            print "         turn the servo: e.g. >servo position 30 50"
-            print "         "
+            print "    Control the camera: "
+            print "      - shot a picture: e.g. >camera shot"
+            print "      - fetch a picture: Please use sftp or scp"
+            print "          Note: the picture is dev_<device ID>.jpg in ~"
+            print "      "
+            print "    Control the servo: e.g. >servo position 30 50"
+            print "      "
         else:
             pass
 
@@ -55,6 +56,7 @@ class RasPiCam(WikkitDevice):
                 print "Failed..."
             return
         if (element[0] == "archive"):
+            # TODO: archive the picture
             pass
 
     def _handle_servo(self, element):  # tested
@@ -65,6 +67,12 @@ class RasPiCam(WikkitDevice):
                               data=json.dumps(data),
                               headers=headers)
                 return
+
+            print "inValid input, check >help"
+            # self._print_help()
+        except Exception, e:
+            print str(e)
+            self._print_help()
 
             """
             if (element[2] == "monitor"):
@@ -98,7 +106,3 @@ class RasPiCam(WikkitDevice):
                 print "exiting monitor mode... Bye"
                 continue
             """
-            self._print_help()
-        except Exception, e:
-            print str(e)
-            self._print_help()

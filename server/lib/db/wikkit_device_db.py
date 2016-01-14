@@ -263,7 +263,7 @@ class db_api(object):
 
     # API for ursers
     def usr_enable_mgmt(self, dev_id, usr_dev=True):
-        if (self.user_check_dev_mgmt(dev_id)):  # already mgmt
+        if (self.usr_check_dev_mgmt(dev_id)):  # already mgmt
             return [True, True]
         else:
             return [self.set_device(dev_id, 5, 0, usr_dev),  # need wait
@@ -283,6 +283,7 @@ class db_api(object):
         return False
 
     def usr_ssh_enable(self, dev_id):
+        print "enabled ssh"
         return self.set_device(dev_id, 5, 32)
 
     def usr_ssh_disable(self, dev_id):

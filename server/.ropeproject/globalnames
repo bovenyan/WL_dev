@@ -3,5 +3,5 @@ tk1_db_apiqaUlib.db.cam_device_db]qU
 cam_db_apiqaUlib]Ulib.request.cam_request_handler]q	Ucam_req_handlerq
 aUlib.cam_device_db]qU
 cam_db_apiqaUlib.wikkit_device_db]q(Udb_apiqUccqeUlib.request]Ulib.db]U"lib.request.wikkit_request_handler]qUreq_handlerqaUdb_conn]q(Udb_apiqUccqeUprocess_mgmt]q(Ukill_pids_of_portqUfetch_pids_of_portqeU
-wikkit_dev]q(Uusr_move_servoqUmanage_timeoutqUappqUdevice_classqUindexqUusr_control_sshqUfile_dirqUnotify_resetq Udev_check_statusq!Ucam_dbq"Uusr_check_mgmtq#U	usr_resetq$Uconfigq%Utk1_dbq&Uusr_check_versionq'Uusr_enable_mgmtq(Uusr_take_pictureq)Ussh_timeoutq*Uusr_renew_mgmtq+UAPP_VERSIONq,Udev_report_doneq-eUlib.request.process_mgmt]q.(Ukill_pids_of_portq/Ufetch_pids_of_portq0eUlib.request.tk1_request_handler]q1Utk1_req_handlerq2aUlib.db.tk1_device_db]q3U
-tk1_db_apiq4au.
+wikkit_dev]q(Uusr_move_servoqUmanage_timeoutqUappqUdevice_classqUindexqUusr_control_sshqUfile_dirqUnotify_resetq Udev_check_statusq!Uusr_check_versionq"Uusr_check_mgmtq#U	usr_resetq$Uconfigq%Uusr_enable_mgmtq&Uusr_take_pictureq'Ussh_timeoutq(Uusr_renew_mgmtq)UAPP_VERSIONq*Udev_report_doneq+eUlib.request.process_mgmt]q,(Ukill_pids_of_portq-Ufetch_pids_of_portq.eUlib.request.tk1_request_handler]q/Utk1_req_handlerq0aUlib.db.tk1_device_db]q1U
+tk1_db_apiq2au.

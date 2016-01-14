@@ -12,6 +12,7 @@ class WikkitDevice(object):
         self.active = True
         self.manage_mode = False
         self.dev_type = dev_type
+        self.name = dev_type + "-" + str(dev_id)
 
         # fetch initate state
         response = requests.get(self.url + "/mode", headers=headers)
@@ -43,13 +44,21 @@ class WikkitDevice(object):
                 if ("wait" in content):
                     wait = int(content["wait"])
                     print "Management Set, Device not ready..."
-                    if (wait > 1800):
-                        print "Fatal: Device haven't been seen for too long."
-                        print "Please Notify Administrator asap."
-                        return True
+                    if ("miss" in content):
+                        if int(content["miss"]) > 1000:
+                            print "Fatal: Device haven't been reported for " + \
+                                str(content["miss"]) + " cycles"
+                            print "Please Notify Administrator asap."
+                            return True
+                        else:
+                            print "Warning: Device occationally experience" + \
+                                  "poor connection, expect unstable performance"
 
                     print "Please wait for " + str(wait) + " seconds"
                     sleep(wait)
+
+                # TODO: Check the status to confirm
+
                 print "Device management ready"
                 self.manage_mode = True
                 return True
@@ -176,8 +185,6 @@ class WikkitDevice(object):
                 print "ssh tunnel started, please login with another terminal"
                 print "   > ssh ubuntu@<alicloud IP> -p " + str(openPort)
                 print "   > sftp -P " + str(openPort) + " pi@<alicloud IP>"
-
-            print "Unknown device... Failed"
         else:
             print "Failed to start..."
 

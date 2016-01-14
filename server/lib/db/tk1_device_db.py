@@ -2,8 +2,8 @@ from wikkit_device_db import db_api
 
 
 class tk1_db_api(db_api):
-    def __init__(self, conf_path):
-        super(tk1_db_api, self).__init__(conf_path, "tk1")
+    def __init__(self, config):
+        super(tk1_db_api, self).__init__(config, "tk1")
 
     def device_get_mode(self, dev_id):
         res = {}

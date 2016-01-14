@@ -2,8 +2,8 @@ from wikkit_device_db import db_api
 
 
 class cam_db_api(db_api):
-    def __init__(self, conf_path):
-        super(cam_db_api, self).__init__(conf_path, "piCam")
+    def __init__(self, config):
+        super(cam_db_api, self).__init__(config, "piCam")
 
     def device_get_mode(self, dev_id):
         res = {}
@@ -20,8 +20,8 @@ class cam_db_api(db_api):
             res["last_seen"] = res_array[1]
             res["manage_flags"] = int(res_array[2])
             res["op_codes"] = int(res_array[3])
-            res["x_pos"] = int(res_array[4])
-            res["y_pos"] = int(res_array[5])
+            res["pos_x"] = int(res_array[4])
+            res["pos_y"] = int(res_array[5])
 
         except Exception, e:
             print str(e)

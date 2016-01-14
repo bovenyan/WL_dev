@@ -1,18 +1,19 @@
 from lib.request.wikkit_request_handler import req_handler
-from lib.db.cam_device_db import cam_device_db
+from lib.db.cam_device_db import cam_db_api
 
 
 class cam_req_handler(req_handler):
-    def __init__(self, conf_path):
-        super(cam_req_handler, self).__init__(conf_path, "piCam")
-        self.dbi = cam_device_db(conf_path)
+    def __init__(self, config):
+        super(cam_req_handler, self).__init__(config, "piCam")
+        self.dbi = cam_db_api(config)
 
     def reply_device_status(self, dev_id):
         reply = super(cam_req_handler, self).reply_device_status(dev_id)
 
-        if bool(reply):
+        if not (reply is None):
             return reply
 
+        reply = {"mode": "management", "options": {}, "reason": None}
         # exam servo turn
         servo_active = bool(self.op_codes % 2)
         if (servo_active):
@@ -22,7 +23,7 @@ class cam_req_handler(req_handler):
             reply["options"]["pos_x"] = int(self.record["pos_x"])
             reply["options"]["pos_y"] = int(self.record["pos_y"])
 
-            self.dbi.device_reset_user(dev_id)  # reset for next immediately
+            self.dbi.device_reset_usr(dev_id)  # reset for next immediately
 
             return reply
 
@@ -30,10 +31,12 @@ class cam_req_handler(req_handler):
         picture = bool((self.op_codes >> 4) % 2)   # tested
         if (picture):
             reply["options"]["type"] = "picture"
-            self.dbi.device_reset_user(dev_id)  # reset for next immediately
+            self.dbi.device_reset_usr(dev_id)  # reset for next immediately
             return reply
 
+        # unknown
         self.dbi.device_reset_usr(dev_id)
+        return reply
 
     def handle_dev_report(self, dev_id, content):
         super(cam_req_handler, self).handle_dev_report(dev_id, content)
@@ -42,10 +45,10 @@ class cam_req_handler(req_handler):
             pos_x = int(content["pos_x"])
             pos_y = int(content["pos_y"])
             self.dbi.device_update_pos(dev_id, pos_x, pos_y)
-            self.dbi.device_reset_user(dev_id)
+            self.dbi.device_reset_usr(dev_id)
 
         if ("picture" in content and content["picture"]):  # picture
-            self.dbi.device_reset_user(dev_id)
+            self.dbi.device_reset_usr(dev_id)
 
     def handle_usr_turn_servo(self, dev_id, content):
         if self.handle_usr_check_mode(dev_id):
@@ -67,7 +70,7 @@ class cam_req_handler(req_handler):
     def handle_usr_take_picture(self, dev_id, op):
         if self.handle_usr_check_mode(dev_id):
             if op == "shot":
-                return {"success": self.dbi.usr_take_picture(dev_id),
+                return {"success": self.dbi.usr_take_pic(dev_id),
                         "is_mgmt": True}
 
             return {"success": False, "is_mgmt": True}
