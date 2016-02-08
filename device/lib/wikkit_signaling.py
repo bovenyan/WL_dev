@@ -9,7 +9,10 @@ logging.basicConfig(filename='signaling.log', level=logging.DEBUG)
 
 
 class wikkit_signaling(object):
-    def __init__(self, config):
+    def __init__(self, config, config_file_name):
+        self.config = config
+        self.config_file_name = config_file_name
+
         self.dev_id = int(config.get("signalConfig", "devID"))
         self.mgmt_sleep = int(config.get("signalConfig", "mgmtSleep"))
         self.op_sleep = int(config.get("signalConfig", "opSleep"))
@@ -23,6 +26,16 @@ class wikkit_signaling(object):
             self.dev_type + "/" + str(self.dev_id)
 
         self.ssh_pipe = None
+
+    def reload_config(self):
+        self.mgmt_sleep = int(self.config.get("signalConfig", "mgmtSleep"))
+        self.op_sleep = int(self.config.get("signalConfig", "opSleep"))
+
+    def save_config(self):
+        self.config.set("signalConfig", "mgmtSleep", self.mgmg_sleep)
+        self.config.set("signalConfig", "opSleep", self.op_sleep)
+        with open(self.config_file_name, 'w') as config_file:
+            self.config.write(config_file)
 
     def _handle_reset(self):
         kill_pids_of_port(self.server_ip, 22)

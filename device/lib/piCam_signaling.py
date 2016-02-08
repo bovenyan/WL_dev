@@ -6,8 +6,8 @@ from time import sleep
 
 
 class cam_signaling(wikkit_signaling):
-    def __init__(self, config):
-        super(cam_signaling, self).__init__(config)
+    def __init__(self, config, config_file_name):
+        super(cam_signaling, self).__init__(config, config_file_name)
 
         self.blaster = open('/dev/servoblaster', 'w')
 
@@ -26,7 +26,10 @@ class cam_signaling(wikkit_signaling):
                              self.des_queue_x, self.cur_queue_x)
         self.servo_y = servo(config, 1, self.blaster, lock,
                              self.des_queue_y, self.cur_queue_y)
-        self.servo_positions = [0, 0]
+        servo_pos = config.get("servoConfig", "servoXY")
+        temp = servo_pos.split(",")
+        self.servo_positions = [int(temp[0]), int(temp[1])]
+        # self.servo_positions = [0, 0]
 
     def _handle_reset(self):
         super(cam_signaling, self)._handle_reset()
@@ -75,6 +78,12 @@ class cam_signaling(wikkit_signaling):
                 else:
                     response["servo"] = False
 
+                if options["save_config"]:
+                    servo_init_pos = str(self.servo_positions[0]) + \
+                        "," + str(self.servo_positions[1])
+                    self.config.set("servoConfig", "servoXY", servo_init_pos)
+                    self.config.write(self.config_file_name)
+
             except Exception, e:
                 global logging
                 logging.error(str(e))
@@ -82,11 +91,10 @@ class cam_signaling(wikkit_signaling):
 
         if ("type" in options and options["type"] == "picture" and
            self.dev_type == "piCam"):
-            print "I'm taking picture"
             filename = str(self.dev_type) + "-" + \
                 str(self.dev_id) + ".jpg"
             os.popen("rm " + filename)
-            os.popen("raspistill -w 640 -h 480 -t 1 -q 50 -o  " + \
+            os.popen("raspistill -w 640 -h 480 -t 1 -q 50 -o  " +
                      filename + " &")
             sleep(1)  # wait for picture to take
             response["picture"] = True

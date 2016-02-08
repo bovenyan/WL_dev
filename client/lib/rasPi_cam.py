@@ -68,6 +68,18 @@ class RasPiCam(WikkitDevice):
                               headers=headers)
                 return
 
+            if (element[0] == "save"):
+                ans = raw_input("Save the current servo position \
+                                as default (y/N)")
+                if (ans == 'y' or ans == 'Y'):
+                    requests.post(self.url+"/servo",
+                                  data=json.dumps({"save_pos": True}),
+                                  headers=headers)
+                else:
+                    print "Abort ... "
+
+                return
+
             print "inValid input, check >help"
             # self._print_help()
         except Exception, e:

@@ -22,6 +22,7 @@ class cam_req_handler(req_handler):
             reply["options"]["servo_inc_xy"] = int((self.op_codes >> 2) % 4)
             reply["options"]["pos_x"] = int(self.record["pos_x"])
             reply["options"]["pos_y"] = int(self.record["pos_y"])
+            reply["options"]["save_config"] = int((self.op_codes >> 7) % 2)
 
             self.dbi.device_reset_usr(dev_id)  # reset for next immediately
 
@@ -62,6 +63,10 @@ class cam_req_handler(req_handler):
                                        content['pos_x'],
                                        content['pos_y'])
                 return {"success": True, "is_mgmt": True}
+
+            if ('save_pos' in content):
+                self.dbi.usr_servo_sav(dev_id)
+                return {"success": True, "is_ngnt": True}
 
             return {"success": False, "is_mgmt": True}
         else:

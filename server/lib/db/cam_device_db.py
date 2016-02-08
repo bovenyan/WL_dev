@@ -78,6 +78,9 @@ class cam_db_api(db_api):
             print str(e)
             return False
 
+    def usr_servo_sav(self, dev_id):
+        return self.set_op_codes(128, dev_id)
+
     def usr_take_pic(self, dev_id):
         return self.set_device(dev_id, 5, 16)
 
