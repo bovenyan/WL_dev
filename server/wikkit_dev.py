@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, abort, send_from_directory
+from flask import Flask, request, jsonify, abort
 from datetime import datetime, timedelta
 import db_conn as db
 import ConfigParser
@@ -19,6 +19,9 @@ manage_timeout = int(config.get('opconfig', 'manageTO'))
 ssh_timeout = int(config.get('opconfig', 'sshTO'))
 file_dir = "./"
 notify_reset = False
+
+# TODO: modify this temp_ip_solution
+dev_ip_map = {}
 
 
 @app.route("/")
@@ -46,6 +49,8 @@ def dev_check_status(devId):
 
     last_updated = record[0]
     manage_flags = int(record[1])
+
+    dev_ip_map[devId] = request._remote_addr  # TODO: tempo ip rec
 
     # RESET MODE OR FLOP TO RESET
     if ((manage_flags >> 4) % 2 != 0):  # reset
@@ -331,6 +336,15 @@ def usr_reset(devId):
     db_api.user_reset(devId)
     # TODO close device ssh id
     return jsonify({"success": True})
+
+
+# TODO: tempo for retrieving IP
+@app.route("/usr/<int:devId>/getip", methods=['GET'])
+def usr_getip(devId):
+    if devId in dev_ip_map:
+        return jsonify({"ip": dev_ip_map[devId]})
+    else:
+        return jsonify({"ip": ""})
 
 
 if __name__ == '__main__':
