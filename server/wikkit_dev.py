@@ -38,6 +38,7 @@ def index():
 def dev_check_status(devId):
     global ssh_timeout
     global manage_timeout
+    global dev_ip_map
 
     record = db_api.device_get_rec(devId)
 
@@ -50,7 +51,11 @@ def dev_check_status(devId):
     last_updated = record[0]
     manage_flags = int(record[1])
 
-    dev_ip_map[devId] = request._remote_addr  # TODO: tempo ip rec
+    if request.headers.getlist("X-Forwarded-For"):
+        dev_ip_map[devId] = request.headers.getlist("X-Forwarded-For")[0]
+    else:
+        dev_ip_map[devId] = request.remote_addr
+    print "devIPPPP:" + str(dev_ip_map)
 
     # RESET MODE OR FLOP TO RESET
     if ((manage_flags >> 4) % 2 != 0):  # reset
