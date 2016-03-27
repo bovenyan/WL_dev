@@ -213,7 +213,7 @@ def usr_enable_mgmt(devId):
             result = db_api.usr_enable_mgmt(devId)
 
             if (not result[1]):  # need wait
-                wait = timedelta(0, 600, 0) - (datetime.now() -
+                wait = timedelta(0, 120, 0) - (datetime.now() -
                                                db_api.get_lastseen(devId))
                 wait = wait.seconds
 
