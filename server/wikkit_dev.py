@@ -4,6 +4,8 @@ import db_conn as db
 import ConfigParser
 import os
 from process_mgmt import kill_pids_of_port
+import socket
+import json
 
 """
 Code by bovenyan
@@ -19,6 +21,9 @@ manage_timeout = int(config.get('opconfig', 'manageTO'))
 ssh_timeout = int(config.get('opconfig', 'sshTO'))
 file_dir = "./"
 notify_reset = False
+
+host = socket.gethostname()
+algo_port = int(config.get('algoconfig', 'port'))
 
 # TODO: modify this temp_ip_solution
 dev_ip_map = {}
@@ -351,6 +356,26 @@ def usr_getip(devId):
     else:
         return jsonify({"ip": ""})
 
+
+# TODO: DANGER AREA: Yuanyi Yilin App server
+@app.route("/tk1/return_customer/d_feature/<int:cam_id>", methods=['POST'])
+def tk1_post_feature(cam_id):
+    content = request.json
+    if not content:
+        abort(400)
+
+    if (isinstance(content, dict) and "img" in content and
+       "start_t" in content and "feature" in content):
+        # TODO: Admission Control
+        content['cameras_id'] = cam_id
+        app_socket = socket.socket()
+        app_socket.connect((host, algo_port))
+        app_socket.send(json.dumps(content, separators=(',', ':')))
+        app_socket.close
+
+        return jsonify({"success": True})
+    else:
+        abort(400)
 
 if __name__ == '__main__':
     """ Main
