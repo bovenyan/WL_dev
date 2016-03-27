@@ -368,12 +368,15 @@ def tk1_post_feature(cam_id):
        "start_t" in content and "feature" in content):
         # TODO: Admission Control
         content['cameras_id'] = cam_id
-        app_socket = socket.socket()
-        app_socket.connect((host, algo_port))
-        app_socket.send(json.dumps(content, separators=(',', ':')))
-        app_socket.close
+        try:
+            app_socket = socket.socket()
+            app_socket.connect((host, algo_port))
+            app_socket.send(json.dumps(content, separators=(',', ':')))
+            app_socket.close
 
-        return jsonify({"success": True})
+            return jsonify({"success": True})
+        except Exception, e:
+            return jsonify({"success": False, "reason": str(e)})
     else:
         abort(400)
 
