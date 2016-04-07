@@ -27,6 +27,9 @@ class signaling(object):
         self.dev_type = config.get("signalConfig", "devType")
         self.rest_addr = self.server_ip + ":" + self.server_port
         self.url = "http://" + self.rest_addr + "/dev/" + str(self.dev_id)
+        init_pos = config.get("servoConfig", "servoXY")
+        init_pos = init_pos.split(",")
+        init_pos = [int(init_pos[0]), int(init_pos[1])]
 
         self.des_queue_x = Queue()
         self.des_queue_y = Queue()
@@ -56,15 +59,18 @@ class signaling(object):
             self.step = int(config.get("servoConfig", "step"))
 
         self.process = Process(target=self.signal_channel,
-                               args=(self.dev_type, ))
+                               args=(self.dev_type, init_pos,))
         self.process.start()
 
-    def signal_channel(self, dev_type):
+    def signal_channel(self, dev_type, servo_positions=[0,0]):
         headers = {'Content-Type': 'application/json'}
 
-        servo_positions = [0, 0]
         report_url = self.url + "/report"
         ssh_pipe = None
+
+        if (dev_type == "pi"):
+            self.des_queue_x.put(servo_positions[0])  # reset servo_x
+            self.des_queue_y.put(servo_positions[1])  # reset servo_y
 
         while True:
             try:
@@ -83,8 +89,8 @@ class signaling(object):
 
             if 'reset' == reply["mode"]:
                 if (dev_type == "pi"):
-                    self.des_queue_x.put(0)  # reset servo_x
-                    self.des_queue_y.put(0)  # reset servo_y
+                    self.des_queue_x.put(servo_positions[0])  # reset servo_x
+                    self.des_queue_y.put(servo_positions[1])  # reset servo_y
                 kill_pids_of_port(self.server_ip, 22)
                 del ssh_pipe
                 ssh_pipe = None
@@ -144,9 +150,6 @@ class signaling(object):
                     os.popen("rm " + filename)
                     os.popen("raspistill -t 10 -o " + filename + " &")
                     sleep(1)  # wait for picture to take
-
-                    # disable upload to cloud
-                    # TODO: interface reserved only for cloud Sync of Pic
                     """
                     try:
                         open(filename)
@@ -154,6 +157,7 @@ class signaling(object):
                         logging.error("cannot open")
                         response["picture"] = False
                     else:
+                        # TODO check conn
                         try:
                             resp = requests.post(self.url + "/picture",
                                                  files={"file": open(filename,
@@ -167,7 +171,7 @@ class signaling(object):
                         except Exception, e:
                             logging.error(str(e))
                     """
-                    response["picture"] = True
+                    response["picture"] = False
 
                 if ("type" in options and options["type"] == "ssh"):
                     if ("op" in options and options["op"] == "start"):
