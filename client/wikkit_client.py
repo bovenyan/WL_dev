@@ -1,7 +1,7 @@
 import ConfigParser
-import lib.file_trans as fTrans
 import requests
-from lib.cam import cam
+from lib.rasPi_cam import RasPiCam
+from lib.tk1 import TK1
 from lib.welcome import print_welcome
 
 # config parsing
@@ -12,7 +12,6 @@ config.read(conf_path)
 # Init
 url = "http://" + config.get("signal", "server") + "/usr/"
 headers = {'Content-Type': 'application/json'}
-fileAdapt = fTrans.fileAdapter(conf_path)
 device = None
 
 # negotiate version
@@ -31,7 +30,7 @@ try:
             print "And run \"git checkout " + "v" + serverVersion
         else:
             print_welcome()
-            print "Version 1.0"
+            print "Welcome to WikkitDev-Tsuki (version " + version + ")"
             negotiated = True
     else:
         print "Version check Failed. Maybe connection is unstable"
@@ -51,19 +50,28 @@ while(negotiated):
 
         if (element[0] == "help"):  # tested
             print "**** You are in normal mode****"
-            print "Type an device id to enter device mode: e.g. >cam-1"
-            print "NOTE!!!: in version V1.0, tk-1 machine is cam-2"
-            print "Exit this platform: e.g. exit"
+            print "Manage device with certain ID: > cam-1 or > tk-1"
+            print "Exit this platform: > exit"
 
         if (element[0] == "exit"):  # tested
             print "Exiting... Bye"
             break
 
-        if (element[0].startswith("cam-")):   # control a cam   # tested
-            camDev = element[0].split('-')
+        if (element[0].startswith("cam-")):   # control a rasPi
+            div = element[0].split('-')
             try:
-                dev_id = int(camDev[1])
-                device = cam(url, dev_id, fileAdapt)
+                dev_id = int(div[1])
+                device = RasPiCam(url, dev_id)
+            except Exception, e:
+                print str(e)
+                print "maybe connection is bad, retry..."
+                continue
+
+        if (element[0].startswith("tk-")):
+            div = element[0].split('-')
+            try:
+                dev_id = int(div[1])
+                device = TK1(url, dev_id)
             except Exception, e:
                 print str(e)
                 print "maybe connection is bad, retry..."
@@ -71,11 +79,9 @@ while(negotiated):
 
     else:
         if (device.manage_mode):
-            query = raw_input("Wikkit Device " + str(device.dev_id) +
-                              ": (management) > ")
+            query = raw_input("Device " + device.name + ": (management) > ")
         else:
-            query = raw_input("Wikkit Device " + str(device.dev_id) +
-                              ": (operation) > ")
+            query = raw_input("Device " + device.name + ": (operational) > ")
         try:
             device.route_query(query)
 
