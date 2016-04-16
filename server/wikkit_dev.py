@@ -1,9 +1,11 @@
-from flask import Flask, request, jsonify, abort, send_from_directory
+from flask import Flask, request, jsonify, abort
 from datetime import datetime, timedelta
 import db_conn as db
 import ConfigParser
 import os
 from process_mgmt import kill_pids_of_port
+import socket
+import json
 
 """
 Code by bovenyan
@@ -20,6 +22,12 @@ ssh_timeout = int(config.get('opconfig', 'sshTO'))
 file_dir = "./"
 notify_reset = False
 
+host = socket.gethostname()
+algo_port = int(config.get('algoconfig', 'port'))
+
+# TODO: modify this temp_ip_solution
+dev_ip_map = {}
+
 
 @app.route("/")
 def index():
@@ -35,6 +43,7 @@ def index():
 def dev_check_status(devId):
     global ssh_timeout
     global manage_timeout
+    global dev_ip_map
 
     record = db_api.device_get_rec(devId)
 
@@ -46,6 +55,12 @@ def dev_check_status(devId):
 
     last_updated = record[0]
     manage_flags = int(record[1])
+
+    if request.headers.getlist("X-Forwarded-For"):
+        dev_ip_map[devId] = request.headers.getlist("X-Forwarded-For")[0]
+    else:
+        dev_ip_map[devId] = request.remote_addr
+    print "devIPPPP:" + str(dev_ip_map)
 
     # RESET MODE OR FLOP TO RESET
     if ((manage_flags >> 4) % 2 != 0):  # reset
@@ -208,7 +223,7 @@ def usr_enable_mgmt(devId):
             result = db_api.usr_enable_mgmt(devId)
 
             if (not result[1]):  # need wait
-                wait = timedelta(0, 600, 0) - (datetime.now() -
+                wait = timedelta(0, 120, 0) - (datetime.now() -
                                                db_api.get_lastseen(devId))
                 wait = wait.seconds
 
@@ -332,6 +347,38 @@ def usr_reset(devId):
     # TODO close device ssh id
     return jsonify({"success": True})
 
+
+# TODO: tempo for retrieving IP
+@app.route("/usr/<int:devId>/getip", methods=['GET'])
+def usr_getip(devId):
+    if devId in dev_ip_map:
+        return jsonify({"ip": dev_ip_map[devId]})
+    else:
+        return jsonify({"ip": ""})
+
+
+# TODO: DANGER AREA: Yuanyi Yilin App server
+@app.route("/tk1/return_customer/d_feature/<int:cam_id>", methods=['POST'])
+def tk1_post_feature(cam_id):
+    content = request.json
+    if not content:
+        abort(400)
+
+    if (isinstance(content, dict) and "img" in content and
+       "start_t" in content and "feature" in content):
+        # TODO: Admission Control
+        content['cameras_id'] = cam_id
+        try:
+            app_socket = socket.socket()
+            app_socket.connect((host, algo_port))
+            app_socket.send(json.dumps(content, separators=(',', ':')))
+            app_socket.close
+
+            return jsonify({"success": True})
+        except Exception, e:
+            return jsonify({"success": False, "reason": str(e)})
+    else:
+        abort(400)
 
 if __name__ == '__main__':
     """ Main
