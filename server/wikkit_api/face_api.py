@@ -53,13 +53,36 @@ def get_group(group_id):
     abort(400)
 
 
-# TODO not complete
 @app.route("/wikkitface/persons", methods=['POST'])
 def post_persons():
     content = request.json
-    if (not ("app_key" in content and "app_secret" in content)):
+    if (not ("person_id" in content and "person_name" in content)):
         abort(400)
-    return jsonify({})
+
+    group_ids = []
+
+    if ("group_ids" in content and not isinstance(content["group_ids"])):
+        abort(400)
+    else:
+        group_ids = content["group_ids"]
+
+    face_ids = []
+    if ("face_ids" in content and not isinstance(content["face_ids"])):
+        abort(400)
+    else:
+        face_ids = content["face_ids"]
+
+    try:
+        person_id = int(content["person_id"])
+        person_name = int(content["person_name"])
+
+        return jsonify({"person_id": person_id,
+                        "person_name": person_name,
+                        "group_ids": group_ids,
+                        "face_ids": face_ids})
+    except Exception, e:
+        print str(e)
+        abort(400)
 
 
 @app.route("/wikkitface/persons/<int:person_id>", methods=['GET'])
@@ -143,7 +166,7 @@ def detect_face():
 
 @app.route("/wikkitface/verify/<int:person_id>", methods=['POST'])
 def verify_face(person_id):
-    if not (person_id in range(1,4)):
+    if not (person_id in range(1, 4)):
         abort(400)
     if 'image' not in request.files:
         abort(400)
