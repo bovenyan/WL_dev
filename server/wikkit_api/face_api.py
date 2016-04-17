@@ -156,7 +156,7 @@ def detect_face():
     file = request.files['image']
 
     if file and allowed_face_file(file.filename):
-        face_info = {"face_id": "1", "left": 145, "right": 147,
+        face_info = {"face_id": 1, "left": 145, "right": 147,
                      "top": 305.0, "bottom": 305.0, "age": 34,
                      "gender": 99,
                      "landmarks": [{"x": 48, "y": 55}, {"x": 69, "y": 33}]}
