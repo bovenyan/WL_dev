@@ -215,7 +215,7 @@ class cam(object):
             print "   > sftp -P " + str(openPort) + " pi@<alicloud IP>"
             print "If you are logging in a tk1, do:"
             print "   > ssh ubuntu@<alicloud IP> -p " + str(openPort)
-            print "   > sftp -P " + str(openPort) + " pi@<alicloud IP>"
+            print "   > sftp -P " + str(openPort) + " ubuntu@<alicloud IP>"
         else:
             print "failed to start..."
 
