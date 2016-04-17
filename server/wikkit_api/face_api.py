@@ -61,20 +61,22 @@ def post_persons():
 
     group_ids = []
 
-    if ("group_ids" in content and not isinstance(content["group_ids"])):
+    if ("group_ids" in content and
+       not isinstance(content["group_ids"], list)):
         abort(400)
     else:
         group_ids = content["group_ids"]
 
     face_ids = []
-    if ("face_ids" in content and not isinstance(content["face_ids"])):
+    if ("face_ids" in content and
+       not isinstance(content["face_ids"], list)):
         abort(400)
     else:
         face_ids = content["face_ids"]
 
     try:
         person_id = int(content["person_id"])
-        person_name = int(content["person_name"])
+        person_name = content["person_name"]
 
         return jsonify({"person_id": person_id,
                         "person_name": person_name,
@@ -94,7 +96,7 @@ def get_person(person_id):
         person_info["group_ids"] = [1, 2]
         person_info["face_ids"] = [3]
 
-        return jsonify(person_id)
+        return jsonify(person_info)
 
     if (person_id == 2):
         person_info = {}
@@ -103,7 +105,7 @@ def get_person(person_id):
         person_info["group_ids"] = [1]
         person_info["face_ids"] = [3]
 
-        return jsonify(person_id)
+        return jsonify(person_info)
 
     abort(400)
 
@@ -123,13 +125,13 @@ def allowed_face_file(filename):
 
 @app.route("/wikkitface/persons/<int:person_id>/addFace", methods=['POST'])
 def post_face(person_id):
-    if 'image' not in request._files:
+    if 'image' not in request.files:
         abort(400)
 
     file = request.files['image']
 
     if file and allowed_face_file(file.filename):
-        file.save(os.path.join(image_dir, 'face_' + str(person_id) +
+        file.save(os.path.join(image_dir, 'face_' + str(person_id) + "_" +
                                datetime.datetime.now().isoformat()))
         return jsonify({"face_id": 1, "person_id": person_id})
 
