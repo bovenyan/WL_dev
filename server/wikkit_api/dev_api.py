@@ -1,14 +1,15 @@
-from flask import Flask, request, jsonify, abort
+from flask import request, jsonify, abort
 import ConfigParser
 from lib.request.cam_request_handler import cam_req_handler
 from lib.request.tk1_request_handler import tk1_req_handler
+
+from wikkit_api import app
 
 """
 Code by bovenyan
 """
 
 APP_VERSION = "1.1-beta"
-app = Flask(__name__)
 
 config = ConfigParser.ConfigParser()
 config.read("./config.ini")
@@ -150,7 +151,3 @@ def usr_reset(dev_type, dev_id):
     else:
         abort(400)
 
-if __name__ == '__main__':
-    """ Main
-    """
-    app.run(debug=True, host='0.0.0.0')
