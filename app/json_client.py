@@ -1,19 +1,28 @@
 import socket
 import json
 
-sock = socket.socket()
+# TODO: load the website and put the call_back in
+
 host = socket.gethostname()
 port = 12345
-sock.bind((host, port))
 
-sock.listen(5)
 
-while True:
-    c, addr = sock.accept()
-    print 'Got connection from', addr
-    # FIXME: is 1024 enough ???
-    content_str = c.recv(1024)
-    obj = json.loads(content_str)
-    print obj
+def call_back_in_web(json_obj):
+    sock = socket.socket()
 
-    c.close()
+    sock.connect((host, port))
+
+    print "Sending content:"
+    sock.send(json.dumps(json_obj, sort_keys=True))
+
+    feed_back = sock.recv(256)
+    print feed_back
+
+    sock.close()
+
+if __name__ == "__main__":
+    obj = {}
+    obj[0] = "friendship's little boat"
+    obj[1] = "say sink..."
+
+    call_back_in_web(obj)
