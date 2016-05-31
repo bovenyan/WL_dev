@@ -1,5 +1,5 @@
 sudo mkdir -p /opt/wikkit
-sudo chown $USER:$USER /opt wikkit
+sudo chown $USER:$USER /opt/wikkit
 mkdir -p /opt/wikkit/signal
 cp * /opt/wikkit/signal/
 
