@@ -36,6 +36,9 @@ def tk1_post_feature(cam_id):
     else:
         abort(400)
 
+@app.route("/tk1/return_customer/night/<int:cam_id>", methods=['GET'])
+def tk1_upload_tunnel(cam_id):
+
 # # TODO: tempo for retrieving IP
 # @app.route("/usr/<int:devId>/getip", methods=['GET'])
 # def usr_getip(devId):
