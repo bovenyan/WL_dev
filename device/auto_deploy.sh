@@ -14,7 +14,7 @@ echo "@reboot python /opt/wikkit/signal/signal.py" >> mycron
 crontab mycron
 rm mycron
 
-ssh -t rsa -b 4096 -C $servername@wikkit.dev
+ssh-keygen -t rsa -b 4096 -C $servername@wikkit.dev
 
 echo "TODO: edit the config.ini"
 echo "      devID=<id>; devType=<type: pi or tk1>"
