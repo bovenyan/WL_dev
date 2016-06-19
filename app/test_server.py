@@ -5,13 +5,13 @@ import string
 import random
 import hashlib
 import os
-from subprocess import call
+from subprocess import Popen, call 
 
 app = Flask(__name__)
 
 active_transmission = {}
 max_concurrent_trans = 5
-kill_timeout = 1800
+inactive_timeout = 1800
 chunk_path = "/tmp/night-chunks/"
 file_path = "/tmp/night-files/"
 
@@ -21,10 +21,10 @@ def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
 
 
 def clear_inactive_transmission():
-    for idx in range(len(active_transmission)):
-        if (datetime.now() - active_transmission[idx] >
-           timedelta(0, kill_timeout, 0)):
-            del active_transmission[idx]
+    for key in active_transmission:
+        if (datetime.now() - active_transmission[key] >
+           timedelta(0, inactive_timeout, 0)):
+            del active_transmission[key]
 
 
 def cal_chksum(file_name):
@@ -41,9 +41,9 @@ def req_start(devId):
         clear_inactive_transmission()
 
     if len(active_transmission) < max_concurrent_trans:
-        chunk_path_dev = chunk_path + str(devId)
+        chunk_path_dev = chunk_path + str(devId) 
         call(["mkdir", "-p", chunk_path_dev])
-        call(["rm", chunk_path_dev + "/*"])
+        call(["rm " + chunk_path_dev + "/*"], shell=True)
 
         filename = id_generator()
         active_transmission[filename] = datetime.now()
@@ -54,17 +54,17 @@ def req_start(devId):
 
 @app.route("/night/<int:devId>/send_chunk", methods=['POST'])
 def send_chunks(devId):
-    if ('file' not in requests.files):
+    if ('file' not in request.files):
         abort(400)
-    chunk = requests.files['file']
+    chunk = request.files['file']
     chunk_path_dev = chunk_path + str(devId)
-
-    chksum = request.form.get['chksum']
-    chunkname = request.form.get['chunkname']
+    
+    chksum = request.form.get('chksum')
+    chunkname = request.form.get('chunkname')
 
     chunk.save(os.path.join(chunk_path_dev, chunkname))
 
-    chksum_cal = cal_chksum(chunk, chunk_path_dev + "/" + chunkname)
+    chksum_cal = cal_chksum(chunk_path_dev + "/" + chunkname)
 
     if chksum == chksum_cal:
         return jsonify({})
@@ -74,16 +74,22 @@ def send_chunks(devId):
 
 @app.route("/night/<int:devId>/confirm_done", methods=['POST'])
 def confirm_done(devId):
-    if (requests.json() is None or "filename" not in requests.json()):
+    content = request.json
+    if (not content and "filename" not in content):
         abort(400)
 
-    file_path_dev = file_path + str(devId)
-    filename = requests.json()['filename']
+    filename = content['filename']
+
+    file_path_dev = file_path + str(devId) + "/" + filename
+    chunk_path_dev = chunk_path + str(devId) + "/" + filename + "*"
 
     call(["mkdir", "-p", file_path_dev])
-    call(["cat", chunk_path + filename + "*", ">", file_path + filename])
+    call(["cat " + chunk_path_dev + "*" + " > " + file_path_dev + filename],
+	shell=True)
 
     del active_transmission[filename]
+
+    return jsonify({})
 
 
 @app.route("/night/<int:devId>/info_kill", methods=['POST'])
