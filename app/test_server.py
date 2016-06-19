@@ -1,7 +1,11 @@
 from flask import request, jsonify, abort, Flask
+import requests
 from datetime import datetime, timedelta
 import string
 import random
+import hashlib
+import os
+from subprocess import call
 
 app = Flask(__name__)
 
@@ -10,7 +14,6 @@ max_concurrent_trans = 5
 kill_timeout = 1800
 chunk_path = "/tmp/night-chunks/"
 file_path = "/tmp/night-files/"
-from subprocess import call
 
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
@@ -19,9 +22,10 @@ def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
 
 def clear_inactive_transmission():
     for idx in range(len(active_transmission)):
-        if (datetime.now() - active_transmission[key] >
-            timedelta(0, kill_timeout, 0)):
-            del active_transmission[key]
+        if (datetime.now() - active_transmission[idx] >
+           timedelta(0, kill_timeout, 0)):
+            del active_transmission[idx]
+
 
 def cal_chksum(file_name):
     digester = hashlib.md5()
@@ -29,6 +33,7 @@ def cal_chksum(file_name):
         for piece in iter(lambda: f.read(4096), b""):
             digester.update(piece)
     return digester.hexdigest()
+
 
 @app.route("/night/<int:devId>/req_start", methods=['GET'])
 def req_start(devId):
@@ -45,6 +50,7 @@ def req_start(devId):
         return jsonify({"filename": filename})
     else:
         return jsonify({})
+
 
 @app.route("/night/<int:devId>/send_chunk", methods=['POST'])
 def send_chunks(devId):
@@ -65,19 +71,27 @@ def send_chunks(devId):
     else:
         return jsonify({"fail_code": 1})
 
-@app.route("/night/<int:devId>/send_chunk", methods=['POST'])
+
+@app.route("/night/<int:devId>/confirm_done", methods=['POST'])
 def confirm_done(devId):
     if (requests.json() is None or "filename" not in requests.json()):
         abort(400)
 
     file_path_dev = file_path + str(devId)
+    filename = requests.json()['filename']
+
     call(["mkdir", "-p", file_path_dev])
     call(["cat", chunk_path + filename + "*", ">", file_path + filename])
 
     del active_transmission[filename]
 
+
 @app.route("/night/<int:devId>/info_kill", methods=['POST'])
 def info_kill(devId):
     chunk_path_dev = chunk_path + str(devId) + "/*"
     call(["rm", "-r", chunk_path_dev])
-    print("device " + str(devId) + "too slow ... killed"
+    print("device " + str(devId) + "too slow ... killed")
+
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0')

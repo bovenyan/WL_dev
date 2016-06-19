@@ -97,7 +97,7 @@ if __name__ == "__main__":
     # TODO: the following parameters should be put into config file
     devId = 1
     kill_timeout = 1800  # if uploading is not completed in kill_to sec, kill it
-    url = "127.0.0.1:5000/night/"
+    url = "172.31.1.2:5000/night/"
 
     chunk_path = "/tmp/parts"
     file_path = "./test.img"
