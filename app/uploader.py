@@ -103,7 +103,7 @@ if __name__ == "__main__":
     # TODO: the following parameters should be put into config file
     devId = 1
     kill_timeout = 1800  # if uploading is not completed in kill_to sec, kill it
-    url = "http://172.31.2.1:5000/night/"
+    url = "http://172.31.1.2:5000/night/"
 
     chunk_path = "/tmp/parts"
     file_path = "./test.img"
@@ -133,9 +133,7 @@ if __name__ == "__main__":
                                              success_backoff,
                                              failure_backoff))
     proc.start()
-    proc.join()
 
-    """
     sleep(kill_timeout)
 
     if (proc.is_alive()):
@@ -143,4 +141,3 @@ if __name__ == "__main__":
         print "Maybe network is too slow.. Killed.."
         proc.terminate()
         inform_kill(url, devId)
-    """
