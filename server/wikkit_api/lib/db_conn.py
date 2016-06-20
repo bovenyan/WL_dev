@@ -2,6 +2,9 @@ import MySQLdb
 import ConfigParser
 from datetime import datetime
 
+time_f = '%Y-%m-%d %H:%M:%S'
+
+
 class db_api(object):
     def __init__(self, conf_path):
         """
@@ -72,21 +75,23 @@ class db_api(object):
             print str(e)
             return False
 
-    def update_upload_activity(self, dev_id, begin_trans=True, update_time=None):
-	try:
+    def update_upload_activity(self, dev_id, begin_trans=True,
+                               update_time=None):
+        try:
             conn = self.conn()
             cur = conn.cursor()
-            
-            if (begin_trans=True):
+
+            if begin_trans:
                 cur.execute("update {} \
                             set last_seen=now(), last_upload=now() \
                             where id={}".format(self.tablename, dev_id))
             else:
+                update_time = update_time.strftime(time_f)
                 cur.execute("update {} \
-                            set last_seen=now(), last_upload={} \
-                            where id={}".format(self.tablename, update_time, 
+                            set last_seen=now(), last_upload='{}' \
+                            where id={}".format(self.tablename, update_time,
                                                 dev_id))
-                
+
             conn.commit()
             conn.close()
             return True
@@ -99,18 +104,19 @@ class db_api(object):
             conn = self.conn()
             cur = conn.cursor()
 
+            oldest_active = oldest_active.strftime(time_f)
+
             cur.execute("select COUNT(*) from {} \
                         where last_upload \
-                        Between {} AND now()".format(self.tablename,
-                                                     oldest_active))
+                        BETWEEN '{}' AND now()".format(self.tablename,
+                                                       oldest_active))
             res = int(cur.fetchone()[0])
 
             conn.close()
             return res
         except Exception, e:
             print str(e)
-            return 4294967295 
-
+            return 4294967295
 
     def get_mgmt_flag(self, dev_id, usr_dev=True):
         try:

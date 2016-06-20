@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import ConfigParser
 import os
 from lib.process_mgmt import kill_pids_of_port
-from wikkit_api import app
+from wikkit_api import app, db_api
 
 
 APP_VERSION = "1.0"

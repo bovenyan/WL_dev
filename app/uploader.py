@@ -107,8 +107,7 @@ if __name__ == "__main__":
 
     chunk_path = "/tmp/parts"
     file_path = "./test.img"
-    # chunk_size = 1024*1024   # 1M at a time
-    chunk_size = 1024   # 1K at a time
+    chunk_size = 1   # 1M at a time
 
     success_backoff = 5
     failure_backoff = 30
@@ -125,7 +124,7 @@ if __name__ == "__main__":
             sleep(failure_backoff)
         else:
             print "splitting ...."
-            split_file(file_path, chunk_path, filename, 1)
+            split_file(file_path, chunk_path, filename, chunk_size)
             break;
 
     proc = Process(target=send_chunks, args=(url, devId, chunk_path,

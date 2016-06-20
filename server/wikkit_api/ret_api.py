@@ -1,8 +1,13 @@
-from wikkit_api import app
+from wikkit_api import app, db_api
 from flask import request, jsonify, abort
 import socket
+import string
+import random
+import hashlib
 import json
+import os
 import ConfigParser
+from subprocess import call
 from datetime import datetime, timedelta
 
 
@@ -12,7 +17,7 @@ host = socket.gethostname()
 algo_port = int(config.get('retconfig', 'port'))
 chunk_path = config.get('retconfig', 'chunkpath')
 file_path = config.get('retconfig', 'filepath')
-max_concurrent_trans = int(config.get('retconfig', 'maxconcurrenttras'))
+max_concurrent_trans = int(config.get('retconfig', 'maxconcurrenttrans'))
 inactive_timeout = int(config.get('retconfig', 'inactiveTO'))
 
 # TODO: modify this temp_ip_solution
@@ -57,15 +62,17 @@ def cal_chksum(file_name):
 @app.route("/night/<int:devId>/req_start", methods=['GET'])
 def req_start(devId):
     oldest_active = datetime.now() - timedelta(0, inactive_timeout, 0)
- 
-    active_trans_no = db_api.get_active_upload(self, oldest_active) 
+
+    active_trans_no = db_api.get_active_upload(oldest_active)
 
     if active_trans_no < max_concurrent_trans:
-        chunk_path_dev = chunk_path + str(devId) 
-	file_path_dev = file_path + str(devId)
+        print "currently active : " + str(active_trans_no)
+        chunk_path_dev = chunk_path + str(devId)
+        file_path_dev = file_path + str(devId)
 
         call(["mkdir", "-p", chunk_path_dev])
         call(["rm " + chunk_path_dev + "/*"], shell=True)
+        call(["rm " + file_path_dev + "/*"], shell=True)
 
         filename = id_generator()
 
@@ -82,7 +89,7 @@ def send_chunks(devId):
         abort(400)
     chunk = request.files['file']
     chunk_path_dev = chunk_path + str(devId)
-    
+
     chksum = request.form.get('chksum')
     chunkname = request.form.get('chunkname')
 
@@ -104,15 +111,17 @@ def confirm_done(devId):
 
     filename = content['filename']
 
-    file_path_dev = file_path + str(devId) + "/" + filename
+    file_path_dev = file_path + str(devId) + "/"
     chunk_path_dev = chunk_path + str(devId) + "/" + filename + "*"
 
     call(["mkdir", "-p", file_path_dev])
     call(["cat " + chunk_path_dev + "*" + " > " + file_path_dev + filename],
-	shell=True)
+         shell=True)
 
-    db_api.update_upload_activity(self, devId, False, 
-                                  datetime.now() - timedelta(0, inactive_timeout, 0))
+    db_api.update_upload_activity(devId, False,
+                                  datetime.now() - timedelta(0,
+                                                             inactive_timeout,
+                                                             0))
 
     return jsonify({})
 
@@ -120,10 +129,10 @@ def confirm_done(devId):
 @app.route("/night/<int:devId>/info_kill", methods=['POST'])
 def info_kill(devId):
     chunk_path_dev = chunk_path + str(devId) + "/*"
-    call(["rm", "-r", chunk_path_dev])
-    print("device " + str(devId) + "too slow ... killed")
-    db_api.update_upload_activity(self, devId, False, 
-                                  datetime.now() - timedelta(0, inactive_timeout, 0))
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0')
+    call(["rm " + chunk_path_dev], shell=True)
+    print("device " + str(devId) + " too slow ... killed")
+    db_api.update_upload_activity(devId, False,
+                                  datetime.now() - timedelta(0,
+                                                             inactive_timeout,
+                                                             0))
+    return jsonify({})
