@@ -42,6 +42,8 @@ def req_start(devId):
 
     if len(active_transmission) < max_concurrent_trans:
         chunk_path_dev = chunk_path + str(devId) 
+	file_path_dev = file_path + str(devId)
+
         call(["mkdir", "-p", chunk_path_dev])
         call(["rm " + chunk_path_dev + "/*"], shell=True)
 
@@ -54,7 +56,7 @@ def req_start(devId):
 
 @app.route("/night/<int:devId>/send_chunk", methods=['POST'])
 def send_chunks(devId):
-    if ('file' not in request.files):
+    if (request.files is None or 'file' not in request.files):
         abort(400)
     chunk = request.files['file']
     chunk_path_dev = chunk_path + str(devId)

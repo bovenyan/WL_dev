@@ -1,6 +1,5 @@
 from flask import request, jsonify, abort
 from datetime import datetime, timedelta
-import lib.db_conn as db
 import ConfigParser
 import os
 from lib.process_mgmt import kill_pids_of_port
@@ -8,7 +7,6 @@ from wikkit_api import app
 
 
 APP_VERSION = "1.0"
-db_api = db.db_api("./config.ini")
 
 config = ConfigParser.ConfigParser()
 config.read("./config.ini")

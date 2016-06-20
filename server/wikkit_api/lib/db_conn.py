@@ -72,6 +72,46 @@ class db_api(object):
             print str(e)
             return False
 
+    def update_upload_activity(self, dev_id, begin_trans=True, update_time=None):
+	try:
+            conn = self.conn()
+            cur = conn.cursor()
+            
+            if (begin_trans=True):
+                cur.execute("update {} \
+                            set last_seen=now(), last_upload=now() \
+                            where id={}".format(self.tablename, dev_id))
+            else:
+                cur.execute("update {} \
+                            set last_seen=now(), last_upload={} \
+                            where id={}".format(self.tablename, update_time, 
+                                                dev_id))
+                
+            conn.commit()
+            conn.close()
+            return True
+        except Exception, e:
+            print str(e)
+            return False
+
+    def get_active_upload(self, oldest_active):
+        try:
+            conn = self.conn()
+            cur = conn.cursor()
+
+            cur.execute("select COUNT(*) from {} \
+                        where last_upload \
+                        Between {} AND now()".format(self.tablename,
+                                                     oldest_active))
+            res = int(cur.fetchone()[0])
+
+            conn.close()
+            return res
+        except Exception, e:
+            print str(e)
+            return 4294967295 
+
+
     def get_mgmt_flag(self, dev_id, usr_dev=True):
         try:
             conn = self.conn()
