@@ -6,6 +6,7 @@ import random
 import hashlib
 import json
 import os
+import shutil
 import ConfigParser
 from subprocess import call
 from datetime import datetime, timedelta
@@ -70,9 +71,21 @@ def req_start(devId):
         chunk_path_dev = chunk_path + str(devId)
         file_path_dev = file_path + str(devId)
 
-        call(["mkdir", "-p", chunk_path_dev])
-        call(["rm " + chunk_path_dev + "/*"], shell=True)
-        call(["rm " + file_path_dev + "/*"], shell=True)
+        print chunk_path_dev
+        try:
+            shutil.rmtree(chunk_path_dev + "/")
+        except Exception as e:
+            print str(e)
+
+        try:
+            os.makedirs(chunk_path_dev)
+        except OSError as exc:
+            print str(exc)
+
+       
+        # call(["mkdir -p " + chunk_path_dev], shell=True)
+        # call(["rm " + chunk_path_dev + "/*"], shell=True)
+        # call(["rm " + file_path_dev + "/*"], shell=True)
 
         filename = id_generator()
 
@@ -114,7 +127,16 @@ def confirm_done(devId):
     file_path_dev = file_path + str(devId) + "/"
     chunk_path_dev = chunk_path + str(devId) + "/" + filename + "*"
 
-    call(["mkdir", "-p", file_path_dev])
+    try:
+        shutil.rmtree(file_path_dev + "/")
+    except Exception as e:
+        print str(e)
+
+    try:
+        os.makedirs(file_path_dev)
+    except OSError as exc:
+        print str(exc)
+
     call(["cat " + chunk_path_dev + "*" + " > " + file_path_dev + filename],
          shell=True)
 
@@ -128,8 +150,14 @@ def confirm_done(devId):
 
 @app.route("/night/<int:devId>/info_kill", methods=['POST'])
 def info_kill(devId):
-    chunk_path_dev = chunk_path + str(devId) + "/*"
-    call(["rm " + chunk_path_dev], shell=True)
+    chunk_path_dev = chunk_path + str(devId) 
+    
+    try:
+         shutil.rmtree(chunk_path_dev + "/")
+         shutil.rmtree(file_path_dev + "/")
+    except Exception as e:
+         print str(e)
+
     print("device " + str(devId) + " too slow ... killed")
     db_api.update_upload_activity(devId, False,
                                   datetime.now() - timedelta(0,
