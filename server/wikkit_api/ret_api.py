@@ -137,8 +137,8 @@ def confirm_done(devId):
     except OSError as exc:
         print str(exc)
 
-    call(["cat " + chunk_path_dev + "*" + " > " + file_path_dev + filename],
-         shell=True)
+    print "fucking true"
+    os.system("/bin/cat " + chunk_path_dev + "*" + " > " + file_path_dev + filename)
 
     db_api.update_upload_activity(devId, False,
                                   datetime.now() - timedelta(0,

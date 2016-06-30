@@ -19,6 +19,7 @@ device = None
 negotiated = False
 version = "0.0"
 version = config.get("general", "version")
+
 try:
     response = requests.get(url + "version", headers=headers)
     if (response.ok and isinstance(response.json(), dict) and
@@ -40,7 +41,6 @@ except Exception, e:
     print str(e)
     print "Version check Failed. Maybe connection is unstable"
 
-# processing requests
 while(negotiated):
     if (device is None):
         query = raw_input('Wikkit Platform > ')
