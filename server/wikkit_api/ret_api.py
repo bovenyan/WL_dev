@@ -8,14 +8,14 @@ import json
 import os
 import shutil
 import ConfigParser
-from subprocess import call
 from datetime import datetime, timedelta
 
 
 config = ConfigParser.ConfigParser()
 config.read("./config.ini")
 host = socket.gethostname()
-algo_port = int(config.get('retconfig', 'port'))
+feature_port = int(config.get('retconfig', 'feature_port'))
+upload_port = int(config.get('retconfig', 'upload_port'))
 chunk_path = config.get('retconfig', 'chunkpath')
 file_path = config.get('retconfig', 'filepath')
 max_concurrent_trans = int(config.get('retconfig', 'maxconcurrenttrans'))
@@ -37,7 +37,7 @@ def tk1_post_feature(cam_id):
         content['cameras_id'] = cam_id
         try:
             app_socket = socket.socket()
-            app_socket.connect((host, algo_port))
+            app_socket.connect((host, feature_port))
             app_socket.send(json.dumps(content, separators=(',', ':')))
             app_socket.close()
 
@@ -69,7 +69,6 @@ def req_start(devId):
     if active_trans_no < max_concurrent_trans:
         print "currently active : " + str(active_trans_no)
         chunk_path_dev = chunk_path + str(devId)
-        file_path_dev = file_path + str(devId)
 
         print chunk_path_dev
         try:
@@ -82,7 +81,6 @@ def req_start(devId):
         except OSError as exc:
             print str(exc)
 
-       
         # call(["mkdir -p " + chunk_path_dev], shell=True)
         # call(["rm " + chunk_path_dev + "/*"], shell=True)
         # call(["rm " + file_path_dev + "/*"], shell=True)
@@ -137,26 +135,35 @@ def confirm_done(devId):
     except OSError as exc:
         print str(exc)
 
-    print "fucking true"
-    os.system("/bin/cat " + chunk_path_dev + "*" + " > " + file_path_dev + filename)
+    os.system("/bin/cat " + chunk_path_dev + "*" + " > " +
+              file_path_dev + filename)
 
     db_api.update_upload_activity(devId, False,
                                   datetime.now() - timedelta(0,
                                                              inactive_timeout,
                                                              0))
 
-    return jsonify({})
+    try:
+        app_socket = socket.socket()
+        app_socket.connect((host, upload_port))
+        app_socket.send(file_path_dev + filename)
+        app_socket.close()
+
+        return jsonify({"success": True})
+    except Exception, e:
+        return jsonify({"success": False, "reason": str(e)})
 
 
 @app.route("/night/<int:devId>/info_kill", methods=['POST'])
 def info_kill(devId):
-    chunk_path_dev = chunk_path + str(devId) 
-    
+    chunk_path_dev = chunk_path + str(devId)
+    file_path_dev = file_path + str(devId)
+
     try:
-         shutil.rmtree(chunk_path_dev + "/")
-         shutil.rmtree(file_path_dev + "/")
+        shutil.rmtree(chunk_path_dev + "/")
+        shutil.rmtree(file_path_dev + "/")
     except Exception as e:
-         print str(e)
+        print str(e)
 
     print("device " + str(devId) + " too slow ... killed")
     db_api.update_upload_activity(devId, False,
