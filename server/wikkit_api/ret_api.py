@@ -146,7 +146,7 @@ def confirm_done(devId):
     try:
         app_socket = socket.socket()
         app_socket.connect((host, upload_port))
-        app_socket.send(file_path_dev + filename)
+        app_socket.send(str(devId) + ":" + file_path_dev + filename)
         app_socket.close()
 
         return jsonify({"success": True})

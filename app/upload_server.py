@@ -26,8 +26,11 @@ def start_service(sock):
             content_str = c.recv(100)
 
             # log
+            delim = content_str.index(':')
+            devId = int(content_str[: delim])
+            print "Device ID: " + str(devId)
             print "Received file directory: "
-            print content_str
+            print content_str[delim + 1, :]
 
             c.close()
         except KeyboardInterrupt:
