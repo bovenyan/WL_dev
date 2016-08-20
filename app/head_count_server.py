@@ -22,6 +22,7 @@ def process_file_callback(content_obj):
 def start_service(sock):
     while True:
         try:
+            print "Waiting... press Cntl+C to exit"
             c, addr = sock.accept()
 
             # receive content
@@ -36,7 +37,6 @@ def start_service(sock):
 
             c.close()
 
-            print "Cntl+C to exit"
         except KeyboardInterrupt:
             print "Exiting ..."
             # error handling

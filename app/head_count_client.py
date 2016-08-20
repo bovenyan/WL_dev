@@ -3,7 +3,7 @@ import json
 
 
 headers = {'Content-Type': 'application/json'}
-url = "http://120.76.26.101:8000/h_count"
+url = "http://120.76.26.101:8000/tk1/return_customer/h_count"
 dev_id = 1
 url_full = url + "/" + str(dev_id)
 
@@ -11,7 +11,7 @@ url_full = url + "/" + str(dev_id)
 def post_headcount_trace(trace):
     data = json.dumps(trace)
     try:
-        requests.post(url, data=data, headers=headers)
+        requests.post(url_full, data=data, headers=headers)
     except Exception, e:
         print "error posting trace" + str(e)
 
