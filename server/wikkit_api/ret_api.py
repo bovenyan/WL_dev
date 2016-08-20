@@ -15,6 +15,7 @@ config = ConfigParser.ConfigParser()
 config.read("./config.ini")
 host = socket.gethostname()
 feature_port = int(config.get('retconfig', 'feature_port'))
+head_count_port = int(config.get('retconfig', 'head_count_port'))
 upload_port = int(config.get('retconfig', 'upload_port'))
 chunk_path = config.get('retconfig', 'chunkpath')
 file_path = config.get('retconfig', 'filepath')
@@ -39,6 +40,32 @@ def tk1_post_feature(cam_id):
             app_socket = socket.socket()
             app_socket.connect((host, feature_port))
             app_socket.send(json.dumps(content, separators=(',', ':')))
+            app_socket.close()
+
+            return jsonify({"success": True})
+        except Exception, e:
+            return jsonify({"success": False, "reason": str(e)})
+    else:
+        abort(400)
+
+
+@app.route("/tk1/return_customer/h_count/<int:cam_id>", methods=['POST'])
+def tk1_post_headcount(cam_id):
+    content = request.json
+    if not content:
+        abort(400)
+
+    if (isinstance(content, list)):
+        # TODO: Admission Control
+        identity = {}
+        identity['store_id'] = cam_id
+        content = [identity] + content
+        try:
+            app_socket = socket.socket()
+            app_socket.connect((host, head_count_port))
+            dev_info = str(cam_id) + " % "
+            app_socket.send(dev_info + json.dumps(content,
+                                                  separators=(',', ':')))
             app_socket.close()
 
             return jsonify({"success": True})
