@@ -29,6 +29,12 @@ def start_service(sock):
             print 'Got connection from', addr
             content_str = c.recv(1000)  # 1000 is buffer size in bytes
 
+            # parse device id
+            delim = content_str.index("%")
+            dev_id = content_str[:delim]
+            print 'device ID ' + dev_id
+            content_str = content_str[delim+1:]
+
             # retrieve device ID
             content_obj = json.loads(content_str)
 
@@ -36,14 +42,9 @@ def start_service(sock):
             process_file_callback(content_obj)
 
             c.close()
-
         except KeyboardInterrupt:
-            print "Exiting ..."
             # error handling
             break
-
-        # process the received file
-        process_file_callback(content_str)
 
 if __name__ == "__main__":
     print "start service"
